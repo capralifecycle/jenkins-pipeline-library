@@ -10,7 +10,7 @@ def call(builtImg, lastImageId) {
 
   stage('Push Docker branch image for cache of next build') {
     if (newImageId == lastImageId) {
-      echo 'We didn\'t bulid a new image - skipping'
+      echo 'We didn\'t build a new image - skipping'
     } else {
       builtImg.push(cacheTag)
     }
