@@ -23,9 +23,7 @@ def call(body) {
     throw e
   } finally {
     // The GitHub plugin uses currentBuild.result which might not
-    // be filled out - default it to SUCCESS but restore value
-    // afterwards.
-    def previousResult = currentBuild.result
+    // be filled out - default it to SUCCESS.
     if (currentBuild.result == null) {
       currentBuild.result = 'SUCCESS'
     }
@@ -43,7 +41,5 @@ def call(body) {
         ]
       ]
     ])
-
-    currentBuild.result = previousResult
   }
 }
