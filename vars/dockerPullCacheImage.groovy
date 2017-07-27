@@ -1,20 +1,22 @@
 #!/usr/bin/groovy
 
-def call(builtImg, lastImageId) {
+def call(dockerImageName) {
+  def lastImageId
   def cacheTag = dockerGetCacheTag()
 
-  def newImageId = sh([
-    returnStdout: true,
-    script: "docker images -q ${builtImg.id}"
-  ]).trim()
-
-  stage('Push Docker branch image for cache of next build') {
-    if (newImageId == lastImageId) {
-      echo 'We didn\'t bulid a new image - skipping'
-    } else {
-      img.push(cacheTag)
+  stage('Pull latest built image for possible cache') {
+    sh "docker pull $dockerImageName:$cacheTag || docker pull $dockerImageName:latest || :"
+    lastImageId = sh([
+      returnStdout: true,
+      script: "docker images -q $dockerImageName:$cacheTag"
+    ]).trim()
+    if (lastImageId == '') {
+      lastImageId = sh([
+        returnStdout: true,
+        script: "docker images -q $dockerImageName:latest"
+      ]).trim()
     }
   }
 
-  return newImageId == lastImageId
+  return lastImageId
 }
