@@ -10,11 +10,10 @@ def call(body) {
     deleteDir()
 
     // Implicitly uses role provided to slave container to get authorization
+    // to use ECR for pulling and pushing our own Docker images.
     sh '(set +x; eval $(aws ecr get-login --region eu-central-1))'
 
-    docker.withRegistry('https://923402097046.dkr.ecr.eu-central-1.amazonaws.com/') {
-      body()
-    }
+    body()
 
     deleteDir()
   }
