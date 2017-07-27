@@ -12,7 +12,7 @@ def call(builtImg, lastImageId) {
     if (newImageId == lastImageId) {
       echo 'We didn\'t bulid a new image - skipping'
     } else {
-      img.push(cacheTag)
+      builtImg.push(cacheTag)
     }
   }
 
