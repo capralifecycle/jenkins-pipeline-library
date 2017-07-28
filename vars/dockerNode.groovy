@@ -11,7 +11,7 @@ def call(body) {
 
     // Implicitly uses role provided to slave container to get authorization
     // to use ECR for pulling and pushing our own Docker images.
-    sh '(set +x; eval $(aws ecr get-login --region eu-central-1))'
+    sh '(set +x; eval $(aws ecr get-login --no-include-email --region eu-central-1))'
 
     body()
 
