@@ -18,11 +18,8 @@ def call(Map args = [:]) {
     color = 'danger'
   }
 
-  slackSend([
-    channel: params.channel ?: '#cals-dev-info',
+  slackNotify([
     color: color,
     message: "${buildStatus}: Job `<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>`",
-    teamDomain: params.teamDomain ?: 'cals-capra',
-    tokenCredentialId: params.tokenCredentialId ?: 'slack-cals-webhook-token',
   ])
 }
