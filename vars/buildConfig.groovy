@@ -4,6 +4,9 @@
  * Generic configuration for jobs
  */
 def call(Map parameters = [:], body) {
+  // Persist parameters to be available in other library functions
+  buildConfigParams(parameters)
+
   def projectProperties = []
 
   def githubUrl = parameters.get('githubUrl')
@@ -35,13 +38,15 @@ def call(Map parameters = [:], body) {
 
   // Make colors look good in Jenkins Console view
   ansiColor('xterm') {
-    _slackNotifyBuild(parameters.slack) {
+    _slackNotifyBuild {
       body()
     }
   }
 }
 
-def _slackNotifyBuild(Map params = [:], body) {
+def _slackNotifyBuild(body) {
+  def params = buildConfigParams().slack ?: [:]
+
   // Only notify Slack if we have specified at least a channel
   if (!params.channel) {
     body()
@@ -50,13 +55,13 @@ def _slackNotifyBuild(Map params = [:], body) {
 
   // Notify Slack before and after we process the body
   try {
-    slackNotifyBuild(params + [ buildStatus: 'STARTED' ])
+    slackNotifyBuild([ buildStatus: 'STARTED' ])
     body()
   } catch (e) {
     currentBuild.result = 'FAILURE'
     throw e
   } finally {
-    slackNotifyBuild(params)
+    slackNotifyBuild()
   }
 }
 
