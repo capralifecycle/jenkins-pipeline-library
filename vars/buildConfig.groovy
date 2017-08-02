@@ -61,7 +61,7 @@ def _slackNotifyBuild(body) {
     currentBuild.result = 'FAILURE'
     throw e
   } finally {
-    slackNotifyBuild()
+    slackNotifyBuild([ buildStatus: currentBuild.result ])
   }
 }
 
