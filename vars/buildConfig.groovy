@@ -35,6 +35,28 @@ def call(Map parameters = [:], body) {
 
   // Make colors look good in Jenkins Console view
   ansiColor('xterm') {
-    body()
+    _slackNotifyBuild(parameters.slack) {
+      body()
+    }
   }
 }
+
+def _slackNotifyBuild(Map params = [:], body) {
+  // Only notify Slack if we have specified at least a channel
+  if (!params.channel) {
+    body()
+    return
+  }
+
+  // Notify Slack before and after we process the body
+  try {
+    slackNotifyBuild(params + [ buildStatus: 'STARTED' ])
+    body()
+  } catch (e) {
+    currentBuild.result = 'FAILURE'
+    throw e
+  } finally {
+    slackNotifyBuild(params)
+  }
+}
+
