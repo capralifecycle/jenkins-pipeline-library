@@ -10,9 +10,7 @@ def call(args) {
   docker.image('923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/serverless').inside("-e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=${env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI} -u root") {
     def accessKey = sh(script: 'curl 169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI | jq .AccessKeyId', returnStdout: true)
     def secretKey = sh(script: 'curl 169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI | jq .SecretAccessKey', returnStdout: true)
-    sh "export HOME=\"\$(pwd)\"; serverless config credentials --provider aws --key $accessKey --secret $secretKey"
-    sh "ls -al"
-    sh "pwd"
+    sh 'export HOME=$(pwd); serverless config credentials --provider aws --key $accessKey --secret $secretKey'
     sh "serverless deploy $args"
   }
 }
