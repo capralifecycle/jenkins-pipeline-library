@@ -14,6 +14,6 @@ def call(args) {
     sh "ls -al"
     sh "pwd"
     sh "$USER"
-    sh "#!/bin/sh -e\n serverless deploy $args"
+    sh "#!/bin/sh -e\\n serverless deploy $args"
   }
 }
