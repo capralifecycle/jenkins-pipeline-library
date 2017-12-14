@@ -10,6 +10,7 @@ def call(args) {
   docker.image('923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/serverless').inside("-e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=${env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}") {
     sh '''
       #!/bin/bash
+      set +x
       
       CREDS=$(aws sts assume-role --role-arn \\
         arn:aws:iam::644399498992:role/ServerlessDeployBot \\
