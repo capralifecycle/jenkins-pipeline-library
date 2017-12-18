@@ -3,7 +3,7 @@
 /**
  * Deploy a service using Serverless.
  */
-def call(args) {
+def call(deployIamRole, serverlessArgs) {
   // AWS_CONTAINER_CREDENTIALS_RELATIVE_URI contains a variable
   // used by awscli to pick up the ECS task role instead of using
   // instance role. This lets us use the task role of the jenkins slave.
@@ -13,7 +13,7 @@ def call(args) {
       set +x
       
       CREDS=$(aws sts assume-role --role-arn \\
-        arn:aws:iam::644399498992:role/ServerlessDeployBot \\
+        ''' + deployIamRole + ''' \\
         --role-session-name serverless-deploy-session --out json)
       export AWS_ACCESS_KEY_ID=$(echo $CREDS | jq -r '.Credentials.AccessKeyId')
       export AWS_SECRET_ACCESS_KEY=$(echo $CREDS | jq -r '.Credentials.SecretAccessKey')
@@ -21,6 +21,6 @@ def call(args) {
       
       # Must set HOME as it is not set and thus serverless will default to root dir which the user does not have read/write access to
       export HOME=$(pwd); serverless config credentials --provider aws --key $AWS_ACCESS_KEY_ID --secret $AWS_SECRET_ACCESS_KEY
-      serverless deploy ''' + args
+      serverless deploy ''' + serverlessArgs
   }
 }
