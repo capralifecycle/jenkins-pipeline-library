@@ -9,7 +9,7 @@ def call(deployIamRole, serverlessArgs) {
   // instance role. This lets us use the task role of the jenkins slave.
   docker.image('923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/serverless').inside("-e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=${env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}") {
     def deploy = "serverless deploy ${serverlessArgs}"
-    sh "echo ${serverlessArgs}"
+    sh "echo ${deploy}"
     sh '''
       #!/bin/bash
       set +x
