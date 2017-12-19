@@ -8,6 +8,7 @@ def call(deployIamRole, serverlessArgs) {
   // used by awscli to pick up the ECS task role instead of using
   // instance role. This lets us use the task role of the jenkins slave.
   docker.image('923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/serverless').inside("-e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=${env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}") {
+    def deploy = "serverless deploy ${serverlessArgs}"
     sh "echo ${serverlessArgs}"
     sh '''
       #!/bin/bash
@@ -22,6 +23,6 @@ def call(deployIamRole, serverlessArgs) {
       
       # Must set HOME as it is not set and thus serverless will default to root dir which the user does not have read/write access to
       export HOME=$(pwd); serverless config credentials --provider aws --key $AWS_ACCESS_KEY_ID --secret $AWS_SECRET_ACCESS_KEY
-      serverless deploy ''' + serverlessArgs + ''' '''
+      ''' + deploy
   }
 }
