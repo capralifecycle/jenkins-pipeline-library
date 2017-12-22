@@ -12,7 +12,7 @@ def call(deployIamRole, serverlessArgs) {
     sh "echo ${deploy}"
     sh '''
       #!/bin/bash
-      set +x
+      set -x
       
       CREDS=$(aws sts assume-role --role-arn \\
         ''' + deployIamRole + ''' \\
