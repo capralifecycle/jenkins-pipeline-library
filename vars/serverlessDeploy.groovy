@@ -11,12 +11,7 @@ def call(deployIamRole, serverlessArgs) {
     sh '''
       #!/bin/bash
       set +x
-      echo "serverless deploy" + ''' + serverlessArgs
-
-    sh '''
-      #!/bin/bash
-      set +x
-      echo "serverless deploy" + ''' + serverlessArgs + ''' '''
+      echo "serverless deploy ''' + serverlessArgs + '''"'''
 
     sh '''
       #!/bin/bash
