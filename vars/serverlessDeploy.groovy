@@ -19,6 +19,7 @@ def call(deployIamRole, serverlessArgs) {
       export AWS_SECRET_ACCESS_KEY=$(echo $CREDS | jq -r '.Credentials.SecretAccessKey')
       export AWS_SESSION_TOKEN=$(echo $CREDS | jq -r '.Credentials.SessionToken')
       
+      echo "Deploying with args ${serverlessArgs}"
       # Must set HOME as it is not set and thus serverless will default to root dir which the user does not have read/write access to
       export HOME=$(pwd); serverless config credentials --provider aws --key $AWS_ACCESS_KEY_ID --secret $AWS_SECRET_ACCESS_KEY
       serverless deploy ''' + serverlessArgs
