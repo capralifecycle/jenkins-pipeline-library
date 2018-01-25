@@ -12,6 +12,9 @@ def call(deployIamRole, serverlessArgs) {
       #!/bin/bash
       set +x
       ls -al
+      ls -al target
+      ls -al target/checkout
+      ls -al target/checkout/target
       echo "serverless deploy ''' + serverlessArgs + '''"'''
 
     sh '''
