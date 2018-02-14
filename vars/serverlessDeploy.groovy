@@ -11,20 +11,6 @@ def call(deployIamRole, serverlessArgs) {
     sh '''
       #!/bin/bash
       set +x
-      ls -al
-      ls -al target
-      if [ -d "target/checkout" ]; then
-        ls -al target/checkout
-      fi
-      if [ -d "target/checkout/target" ]; then
-        ls -al target/checkout/target
-      fi
-      
-      echo "serverless deploy ''' + serverlessArgs + '''"'''
-
-    sh '''
-      #!/bin/bash
-      set +x
       
       CREDS=$(aws sts assume-role --role-arn \\
         ''' + deployIamRole + ''' \\
@@ -35,7 +21,6 @@ def call(deployIamRole, serverlessArgs) {
       
       # Must set HOME as it is not set and thus serverless will default to root dir which the user does not have read/write access to
       export HOME=$(pwd); serverless config credentials --provider aws --key $AWS_ACCESS_KEY_ID --secret $AWS_SECRET_ACCESS_KEY ''' + serverlessArgs + '''
-      ls -al target
       serverless deploy ''' + serverlessArgs + ''' '''
   }
 }
