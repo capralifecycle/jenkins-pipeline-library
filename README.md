@@ -13,7 +13,12 @@ Inspiration sources:
 ## Adding changes
 
 The `master` branch is protected, so changes will have to be made
-in a branch first, before updating `master` to point to that commit.
+in a branch first, then passing as a build, before updating `master` to
+point to that commit. No separate merge commit is needed.
+
+The status of the commit can be tracked by comparing changes to master,
+e.g. https://github.com/capralifecycle/jenkins-pipeline-library/compare/next
+if pushing to the `next` branch.
 
 This is done to reduce the probability that changes cause all
 build in Jenkins fail due to introducing a faulty change.
