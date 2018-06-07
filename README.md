@@ -1,5 +1,7 @@
 # Jenkins2 pipeline library
 
+[![Build Status](https://jenkins.capra.tv/buildStatus/icon?job=jenkins-pipeline-library/master)](https://jenkins.capra.tv/job/jenkins-pipeline-library/master)
+
 Used to store common code used in Jenkins pipelines.
 
 This is set up as a library named 'cals' in Jenkins.
