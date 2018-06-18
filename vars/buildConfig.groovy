@@ -9,22 +9,7 @@ def call(Map parameters = [:], body) {
 
   def projectProperties = []
 
-  def githubUrl = parameters.get('githubUrl')
-  if (githubUrl != null) {
-    projectProperties = projectProperties + [
-      pipelineTriggers([
-        // Build when pushing to repo
-        githubPush(),
-      ]),
-
-      // "GitHub project"
-      [
-        $class: 'GithubProjectProperty',
-        displayName: '',
-        projectUrlStr: githubUrl
-      ],
-    ]
-  }
+  // TODO: parameter githubUrl is no longer used - signal to callers that it is ignored
 
   // Additional properties has to be given explicitly
   // because calling properties multiple times will cause
