@@ -14,7 +14,8 @@ def call(projectKey, Map params = [:]) {
           sonar-scanner \\
             -Dsonar.projectKey='$projectKey' \\
             -Dsonar.sources='${params.get('sources', './src')}' \\
-            -Dsonar.exclusions='${params.get('exclusions', '')}'
+            -Dsonar.exclusions='${params.get('exclusions', '')}' \\
+            -Dsonar.java.binaries='${params.get('java.binaries', '.')}'
           """
       }
     }
