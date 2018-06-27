@@ -1,7 +1,7 @@
 #!/usr/bin/groovy
 
-def call(builtImg, lastImageId) {
-  def cacheTag = dockerGetCacheTag()
+def call(builtImg, lastImageId, suffix = null) {
+  def cacheTag = dockerGetCacheTag(suffix)
 
   def newImageId = sh([
     returnStdout: true,
