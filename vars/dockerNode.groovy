@@ -1,7 +1,11 @@
 #!/usr/bin/groovy
 
-def call(body) {
-  node('docker') {
+def call(Map args = [:], body) {
+  def label = args.label == null
+    ? 'docker'
+    : args.label
+
+  node(label) {
     // We wipe the directory both before and after using the node. The reason
     // for wiping is to enforce consistency between builds and because we
     // might build on different slaves randomly. It also avoids filling up
