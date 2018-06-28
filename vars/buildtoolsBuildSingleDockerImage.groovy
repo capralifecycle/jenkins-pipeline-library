@@ -7,6 +7,7 @@ def call(Map parameters = [:]) {
   // Extract all parameters so that it is easy to see which parameters
   // are available.
   def dockerImageName = parameters.dockerImage
+  def dockerImageTag = parameters.dockerImageTag ?: 'latest'
   def testImageHook = parameters.testImageHook
 
   buildConfig([
@@ -42,9 +43,8 @@ def call(Map parameters = [:]) {
 
       if (env.BRANCH_NAME == 'master' && !isSameImage) {
         stage('Push Docker image') {
-          def tagName = 'latest'
-          img.push(tagName)
-          slackNotify message: "New Docker image available: $dockerImageName:$tagName"
+          img.push(dockerImageTag)
+          slackNotify message: "New Docker image available: $dockerImageName:$dockerImageTag"
         }
       }
     }
