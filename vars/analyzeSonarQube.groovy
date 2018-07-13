@@ -9,7 +9,7 @@
 def call(projectKey, Map params = [:]) {
   stage('Analyze with SonarQube') {
     withSonarQubeEnv {
-      docker.image('923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/sonar-scanner').inside {
+      docker.image('923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/tool/sonar-scanner').inside {
         sh """
           sonar-scanner \\
             -Dsonar.projectKey='$projectKey' \\
