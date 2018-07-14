@@ -8,17 +8,16 @@ def call(builtImg, lastImageId, suffix = null) {
     script: "docker images -q ${builtImg.id}"
   ]).trim()
 
-  stage('Push Docker branch image for cache of next build') {
-    if (newImageId == lastImageId) {
-      echo 'We didn\'t build a new image - skipping'
-      echo 'History of existing image:'
-    } else {
-      builtImg.push(cacheTag)
-      echo 'History of built image:'
-    }
+  echo "Pushing Docker branch image for cache of next build using tag $cacheTag"
 
-    sh "docker history ${builtImg.id}"
+  if (newImageId == lastImageId) {
+    echo 'We didn\'t build a new image - skipping'
+    echo 'History of existing image:'
+  } else {
+    builtImg.push(cacheTag)
+    echo 'History of built image:'
   }
 
+  sh "docker history ${builtImg.id}"
   return newImageId == lastImageId
 }
