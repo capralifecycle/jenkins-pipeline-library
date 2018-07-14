@@ -1,6 +1,6 @@
 #!/usr/bin/groovy
 
-class GlobalStore {
+class GlobalStore implements Serializable {
   static Map data = [:]
 }
 

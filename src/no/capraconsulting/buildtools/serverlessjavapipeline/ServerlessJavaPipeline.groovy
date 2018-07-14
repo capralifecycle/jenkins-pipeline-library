@@ -176,7 +176,7 @@ def askDeployConfirm(currentVersion, config) {
   }
 }
 
-class ConfigDelegate {
+class ConfigDelegate implements Serializable {
   String deployBranch = 'master'
   Closure predeployHook
 
@@ -186,7 +186,7 @@ class ConfigDelegate {
   Map inputTimeout = [time: 3, unit: 'DAYS']
 }
 
-class Env {
+class Env implements Serializable {
   String iamRole
   String stage
   String region
