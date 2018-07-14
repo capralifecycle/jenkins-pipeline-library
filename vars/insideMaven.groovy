@@ -7,8 +7,8 @@
  */
 def call(Map args = [:], body) {
   def tool = args.avoidAlpine == null || !args.avoidAlpine
-    ? 'maven:3-alpine'
-    : 'maven-debian:3.5.2-slim'
+    ? 'maven:3-jdk-8-alpine'
+    : 'maven:3-jdk-8-debian'
 
   def insideArgs = '-v cals-m2-cache:/home/jenkins/.m2'
   if (args.insideArgs != null) {
