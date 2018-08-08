@@ -15,7 +15,9 @@ def call(Map args = [:], body) {
     insideArgs += ' ' + args.insideArgs
   }
 
-  docker.image("923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/tool/$tool").inside(insideArgs) {
+  def img = docker.image("923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/tool/$tool")
+  img.pull() // ensure we have latest version
+  img.inside(insideArgs) {
     withMavenSettings {
       body()
     }
