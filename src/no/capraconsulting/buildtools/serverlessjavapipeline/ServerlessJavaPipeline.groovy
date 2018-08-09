@@ -116,7 +116,7 @@ def pipeline(Closure cl) {
             serverlessDeploy(
               config.deployProd.iamRole,
               [
-                "--artifact target/${artifactId}-${releaseVersion}.jar",
+                "--artifact target/checkout/target/${artifactId}-${releaseVersion}.jar",
                 "--stage ${config.deployProd.stage}",
                 "--region ${config.deployProd.region}",
               ].join(' ')
