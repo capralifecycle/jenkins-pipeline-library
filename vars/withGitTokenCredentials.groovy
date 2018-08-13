@@ -34,7 +34,7 @@ def call(args = [:], body) {
     // have access to this anyways if they want.
     // We use global config so that we can use this block to also clone other
     // repositories without having an existing Git context.
-    sh 'git config --global credential.helper cache'
+    sh 'git config --global credential.helper "cache --socket \'$XDG_CACHE_HOME/git/credential/socket\'"'
 
     def username
     try {
