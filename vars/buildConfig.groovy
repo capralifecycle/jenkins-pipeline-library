@@ -26,7 +26,7 @@ def call(Map parameters = [:], body) {
     // Adds timestamps to the build log.
     // Timestamps are only visible in the classic console log
     timestamps {
-    _slackNotifyBuild {
+      _slackNotifyBuild {
         body()
       }
     }
