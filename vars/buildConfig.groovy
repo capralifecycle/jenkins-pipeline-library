@@ -23,12 +23,8 @@ def call(Map parameters = [:], body) {
 
   // Make colors look good in Jenkins Console view
   ansiColor('xterm') {
-    // Adds timestamps to the build log.
-    // Timestamps are only visible in the classic console log
-    timestamps {
-      _slackNotifyBuild {
-        body()
-      }
+    _slackNotifyBuild {
+      body()
     }
   }
 }
