@@ -10,10 +10,7 @@ def call(Map args = [:], body) {
     ? 'maven:3-jdk-8-alpine'
     : 'maven:3-jdk-8-debian'
 
-  def insideArgs = '-v cals-m2-cache:/home/jenkins/.m2'
-  if (args.insideArgs != null) {
-    insideArgs += ' ' + args.insideArgs
-  }
+  def insideArgs = args.insideArgs ?: ''
 
   def img = docker.image("923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/tool/$tool")
   img.pull() // ensure we have latest version
