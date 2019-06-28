@@ -59,10 +59,5 @@ def call(roleArn, body) {
 }
 
 def tempFileName() {
-  pwd(tmp: true) + '/' + generator(('a'..'z').join(''), 15)
-}
-
-def generator(String alphabet, int n) {
-  def rand = new Random()
-  (1..n).collect { alphabet[rand.nextInt(alphabet.length())] }.join('')
+  pwd(tmp: true) + '/' + UUID.randomUUID().toString()
 }
