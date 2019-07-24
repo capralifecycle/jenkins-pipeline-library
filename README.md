@@ -1,6 +1,6 @@
 # Jenkins2 pipeline library
 
-[![Build Status](https://jenkins.capra.tv/buildStatus/icon?job=jenkins-pipeline-library/master)](https://jenkins.capra.tv/job/jenkins-pipeline-library/job/master/)
+[![Build Status](https://jenkins.capra.tv/buildStatus/icon?job=buildtools/jenkins-pipeline-library/master)](https://jenkins.capra.tv/job/buildtools/job/jenkins-pipeline-library/job/master/)
 
 Used to store common code used in Jenkins pipelines.
 
