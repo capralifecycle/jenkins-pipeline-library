@@ -4,11 +4,6 @@
  * Assume a specific role in AWS using the current credentials.
  * By default the credentials of the Jenkins slave is used.
  *
- * NOTE: CODE RUNNING IN THIS BLOCK MUST NOT PRINT ITS
- * ENVIRONMENT VARIABLES, AS IT WILL LEAK THE TEMPORARY
- * CREDENTIALS IN THE LOGS. AVOID WRAPPING YOUR WHOLE JOB
- * WITH THIS.
- *
  * Either run this outside any Docker container, or run it using
  * a Docker image that provides the aws cli and pass the
  * AWS_CONTAINER_CREDENTIALS_RELATIVE_URI environment
@@ -19,9 +14,6 @@
  *       sh 'aws sts get-caller-identity'
  *     }
  *   }
- *
- * TODO: Mask credentials when a plugin supports it,
- * e.g. https://issues.jenkins-ci.org/browse/JENKINS-48740
  *
  * @param roleArn A full ARN of a role, e.g. arn:aws:iam::123456789123:role/some-role.
  * @param body Closure to be called
@@ -40,11 +32,32 @@ def call(roleArn, body) {
     returnStdout: true
   ).trim().split("\t")
 
-  withEnv([
-    "AWS_ACCESS_KEY_ID=${credentials[0]}",
-    "AWS_SECRET_ACCESS_KEY=${credentials[1]}",
-    "AWS_SESSION_TOKEN=${credentials[2]}",
-  ]) {
-    body()
+  // Avoiding using the AWS_ACCESS_KEY_ID etc. environment variables
+  // as they will cause the values to be leaked in the logs if
+  // environment variables gets printed by some part of the body.
+
+  def tempCredentialFile = tempFileName()
+
+  writeFile(
+    file: tempCredentialFile,
+    text:
+      "[default]\n" +
+      "aws_access_key_id=${credentials[0]}\n" +
+      "aws_secret_access_key=${credentials[1]}\n" +
+      "aws_session_token=${credentials[2]}\n"
+  )
+
+  try {
+    withEnv([
+      "AWS_SHARED_CREDENTIALS_FILE=$tempCredentialFile",
+    ]) {
+      body()
+    }
+  } finally {
+    sh "rm -f '$tempCredentialFile'"
   }
+}
+
+def tempFileName() {
+  pwd(tmp: true) + '/' + UUID.randomUUID().toString()
 }
