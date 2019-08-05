@@ -77,7 +77,7 @@ def createBuild(Closure cl) {
   checkNotNull(buildConfig.dockerBuildImage, 'dockerBuildImage')
 
   def build = { config ->
-    dockerNode {
+    dockerNode([label: buildConfig.dockerNodeLabel]) {
       def buildImage = docker.image(buildConfig.dockerBuildImage)
       buildImage.pull() // Ensure latest version
 
@@ -174,6 +174,8 @@ class ConfigDelegate implements Serializable {
 }
 
 class CreateBuildDelegate implements Serializable {
+  /** Optional override of Jenkins slave node label. */
+  String dockerNodeLabel
   String dockerBuildImage
   /** Optional extra args to mvn command. */
   String mavenArgs = ''
