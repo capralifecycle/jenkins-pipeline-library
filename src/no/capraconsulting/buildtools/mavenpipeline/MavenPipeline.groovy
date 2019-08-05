@@ -97,10 +97,62 @@ def createBuild(Closure cl) {
           saveJacocoReport()
         }
       }
+
+      if (buildConfig.dockerBuild) {
+        buildConfig.dockerBuild.call()
+      }
     }
   }
 
   return build
+}
+
+def createDockerBuild(Closure cl = null) {
+  def dockerBuildConfig = new CreateDockerBuildDelegate()
+  if (cl) {
+    cl.resolveStrategy = Closure.DELEGATE_FIRST
+    cl.delegate = dockerBuildConfig
+    cl()
+  }
+
+  def dockerBuild = {
+    def baseDir = { body ->
+      body()
+    }
+
+    if (dockerBuildConfig.baseDir) {
+      baseDir = { body ->
+        dir(dockerBuildConfig.baseDir) {
+          body()
+        }
+      }
+    }
+
+    if (dockerBuildConfig.copyJar) {
+      sh """
+        f=\$(ls -1 target/*.jar | grep -v original)
+        if [ \$(echo "\$f" | wc -l) -ne 1 ]; then
+          echo "Not exactly one jar file found."
+          echo "Found:"
+          echo "\$f"
+          exit 1
+        fi
+
+        cp "\$f" "${dockerBuildConfig.baseDir ?: '.'}/app.jar"
+      """
+    }
+
+    baseDir {
+      stage('Build Docker image') {
+        sh "docker build ${dockerBuildConfig.contextDir}"
+      }
+    }
+
+    // TODO: Version the image.
+    // TODO: Upload to ECR (for only some branches?)
+  }
+
+  return dockerBuild
 }
 
 void checkNotNull(value, name) {
@@ -127,4 +179,17 @@ class CreateBuildDelegate implements Serializable {
   String mavenArgs = ''
   /** The goal targeted. */
   String mavenGoals = 'verify'
+  /**
+   * Docker build process. Most of our services we build with Maven
+   * builds a Docker image that will be run in an environment.
+   * Optional.
+   */
+  Closure dockerBuild
+}
+
+class CreateDockerBuildDelegate implements Serializable {
+  String baseDir
+  String contextDir = '.'
+  /** Copy the jar from target directory to 'app.jar' in baseDir. */
+  boolean copyJar = true
 }
