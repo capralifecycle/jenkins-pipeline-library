@@ -193,5 +193,5 @@ class CreateDockerBuildDelegate implements Serializable {
   String baseDir
   String contextDir = '.'
   /** Copy the jar from target directory to 'app.jar' in baseDir. */
-  boolean copyJar = true
+  boolean copyJar
 }
