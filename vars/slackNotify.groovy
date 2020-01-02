@@ -10,12 +10,19 @@ def call(Map args = [:]) {
   if (args.message == null) {
     throw new Exception("Message expected")
   }
+  
+  // Workaround for name change of Liflig workspace, so we
+  // do not have to change every use-site location of this.
+  def teamDomain = params.teamDomain ?: 'liflig'
+  if (teamDomain == 'cals-capra') {
+    teamDomain = 'liflig'
+  }
 
   slackSend(
     // Parameters passed can be overriden by args
     [
       channel: params.channel ?: '#cals-dev-info',
-      teamDomain: params.teamDomain ?: 'cals-capra',
+      teamDomain: teamDomain,
       tokenCredentialId: params.tokenCredentialId ?: 'slack-cals-webhook-token',
     ] + args
   )
