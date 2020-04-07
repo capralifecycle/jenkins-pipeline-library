@@ -90,7 +90,7 @@ def createBuild(Closure cl) {
           withMavenSettings {
             stage('Build and verify') {
               sh "mvn -s \$MAVEN_SETTINGS -B --update-snapshots ${buildConfig.mavenArgs} ${buildConfig.mavenGoals}"
-            } 
+            }
           }
         } finally {
           saveJunitReport()
