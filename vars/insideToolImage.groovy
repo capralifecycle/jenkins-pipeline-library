@@ -8,7 +8,7 @@
 def call(name, Map args = [:], body) {
   def insideArgs = args.insideArgs ?: ''
 
-  def img = docker.image("923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/tool/$name")
+  def img = docker.image(toolImageDockerReference(name))
   img.pull() // ensure we have latest version
   img.inside(insideArgs) {
     body()
