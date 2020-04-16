@@ -143,8 +143,17 @@ def createDockerBuild(Closure cl = null) {
     }
 
     baseDir {
+      // Use a random name so it will not conflict with any other build.
+      def name = UUID.randomUUID().toString()
+
       stage('Build Docker image') {
-        sh "docker build ${dockerBuildConfig.contextDir}"
+        sh "docker build -t $name ${dockerBuildConfig.contextDir}"
+      }
+
+      if (dockerBuildConfig.testImage) {
+        stage('Test Docker image') {
+          dockerBuildConfig.testImage.call(name)
+        }
       }
     }
 
@@ -194,4 +203,9 @@ class CreateDockerBuildDelegate implements Serializable {
   String contextDir = '.'
   /** Copy the jar from target directory to 'app.jar' in baseDir. */
   boolean copyJar
+  /**
+   * Hook for testing the image after being built.
+   * Receives the name of the built image as argument.
+   */
+  Closure testImage
 }
