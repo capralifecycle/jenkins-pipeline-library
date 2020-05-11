@@ -86,6 +86,9 @@ def deploy(Closure cl) {
       withAwsRole(config.roleArn) {
         timeout(time: 60) {
           sh """
+            # Reduce noise in build log.
+            set +x
+
             # Start the deployment.
             aws lambda invoke result \\
               --region $region \\
@@ -96,8 +99,6 @@ def deploy(Closure cl) {
 
             cat result
             cat out
-
-            which jq
 
             if ! jq -e ".FunctionError == null" out >/dev/null; then
               echo "Deploy failed - see logs"
