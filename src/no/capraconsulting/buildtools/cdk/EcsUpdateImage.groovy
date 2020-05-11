@@ -26,6 +26,7 @@ Sketch of usage - leaving out details outside scope of this:
       lockName = "my-app-deploy-staging"
       tag = tag
       deployFunctionArn = "arn:aws:lambda:eu-west-1:112233445566:function:staging-deploy-fn"
+      statusFunctionArn = "arn:aws:lambda:eu-west-1:112233445566:function:staging-status-fn"
       roleArn = "arn:aws:iam::112233445566:role/staging-deploy-role"
     }
   }
@@ -39,6 +40,7 @@ Sketch of usage - leaving out details outside scope of this:
       lockName = "my-app-deploy-prod"
       tag = tag
       deployFunctionArn = "arn:aws:lambda:eu-west-1:112233445588:function:prod-deploy-fn"
+      statusFunctionArn = "arn:aws:lambda:eu-west-1:112233445588:function:prod-status-fn"
       roleArn = "arn:aws:iam::112233445588:role/prod-deploy-role"
     }
   }
@@ -50,6 +52,7 @@ class DeployDelegate implements Serializable {
   String lockName
   String tag
   String deployFunctionArn
+  String statusFunctionArn
   String roleArn
 }
 
@@ -77,25 +80,69 @@ def deploy(Closure cl) {
   lock(resource: config.lockName, inversePrecedence: true) {
     milestone config.milestone2
 
+    // TODO: Consider releasing the node between sleeps or set up
+    //  more lightweight executors for this use case.
     dockerNode {
       withAwsRole(config.roleArn) {
-        // TODO: Consider switching to polling instead of blocking.
-        timeout(time: 15) {
+        timeout(time: 60) {
           sh """
-            aws lambda invoke out \\
+            # Start the deployment.
+            aws lambda invoke result \\
               --region $region \\
               --function-name ${config.deployFunctionArn} \\
-              --cli-read-timeout 0 \\
               --payload '{
                 "tag": "${config.tag}"
-              }'
-            cat out
-          """
-        }
+              }' >out
 
-        def result = readJSON(file: "out", returnPojo: true)
-        if (result.containsKey("FunctionError")) {
-          error("Deploy failed - see logs")
+            cat result
+            cat out
+
+            which jq
+
+            if ! jq -e ".FunctionError == null" out >/dev/null; then
+              echo "Deploy failed - see logs"
+              exit 1
+            fi
+
+            # Poll for completion.
+            while true; do
+              aws lambda invoke result \\
+                --region $region \\
+                --function-name ${config.statusFunctionArn} \\
+                >out
+
+              cat result
+              cat out
+
+              if ! jq -e ".FunctionError == null" out >/dev/null; then
+                echo "Status check failed - see logs"
+                exit 1
+              fi
+
+              # Verify the response actually contains expected data.
+              if ! jq -e ".stabilized != null" result >/dev/null; then
+                echo "Unexpected response - see logs"
+                exit 1
+              fi
+
+              if jq -e ".stabilized" result >/dev/null; then
+                echo "Deployment stabilized"
+                break
+              fi
+
+              echo "Sleeping a bit before rechecking deployment status"
+              sleep 10
+            done
+
+            # Verify expected tag, as we never want to continue in case
+            # e.g. some manual override has happened.
+            # If the current tag is null, we continue as that means we
+            # are doing initial account/service deployment.
+            if ! jq -e ".currentTag == \\\$tag" --arg tag "${config.tag}" result >/dev/null; then
+              echo "Unexpected tag - aborting"
+              exit 1
+            fi
+          """
         }
       }
     }
