@@ -6,7 +6,8 @@ This file covers the deployment of new images for ECS services,
 by using a pre-deployed lambda in the target account that
 accepts the ECR tag to be deployed.
 
-TODO: Add link to companion CDK library.
+This is a companion to the setup found in
+https://github.com/capralifecycle/liflig-cdk/tree/master/src/ecs-update-image
 
 Ordering and concurrency is controlled to reduce possible issues
 when having multiple builds queued.
