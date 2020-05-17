@@ -57,23 +57,13 @@ class DeployDelegate implements Serializable {
   String roleArn
 }
 
-private def getFunctionRegion(String functionArn) {
-  // Example value: arn:aws:lambda:eu-west-1:112233445566:function:my-function
-  // Result: eu-west-1
-  def result = (functionArn =~ "arn:aws:lambda:([^\\:]+):.+")
-  if (!result.matches()) {
-    throw new RuntimeException("Could not extract region from " + functionArn)
-  }
-  return result.group(1)
-}
-
 def deploy(Closure cl) {
   def config = new DeployDelegate()
   cl.resolveStrategy = Closure.DELEGATE_FIRST
   cl.delegate = config
   cl()
 
-  def region = getFunctionRegion(config.deployFunctionArn)
+  def region = Util._getFunctionRegion(config.deployFunctionArn)
 
   milestone config.milestone1
 
