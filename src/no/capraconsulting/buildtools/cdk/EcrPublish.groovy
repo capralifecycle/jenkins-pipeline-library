@@ -34,6 +34,7 @@ Sketch of usage - leaving out details outside scope of this:
 class ConfigDelegate implements Serializable {
   String repositoryUri
   String applicationName
+  /** Optional. Needed for withEcrLogin. */
   String roleArn
 }
 
