@@ -81,17 +81,21 @@ def deploy(Closure cl) {
             set +x
 
             # Start the deployment.
+            payload='{
+              "tag": "${config.tag}"
+            }'
+            echo "Sending payload: \$payload"
             aws lambda invoke result \\
               --region $region \\
               --function-name ${config.deployFunctionArn} \\
-              --payload '{
-                "tag": "${config.tag}"
-              }' >out
-
-            cat result
-            cat out
+              --payload "\$payload" \\
+              >out
 
             if ! jq -e ".FunctionError == null" out >/dev/null; then
+              echo "Lambda outfile":
+              cat out
+              echo "Response:"
+              cat result
               echo "Deploy failed - see logs"
               exit 1
             fi
@@ -103,16 +107,21 @@ def deploy(Closure cl) {
                 --function-name ${config.statusFunctionArn} \\
                 >out
 
-              cat result
-              cat out
-
-              if ! jq -e ".FunctionError == null" out >/dev/null; then
+              if jq -e ".FunctionError != null" out >/dev/null; then
+                echo "Lambda outfile":
+                cat out
+                echo "Response:"
+                cat result
                 echo "Status check failed - see logs"
                 exit 1
               fi
 
               # Verify the response actually contains expected data.
-              if ! jq -e ".stabilized != null" result >/dev/null; then
+              if jq -e ".stabilized == null" result >/dev/null; then
+                echo "Lambda outfile":
+                cat out
+                echo "Response:"
+                cat result
                 echo "Unexpected response - see logs"
                 exit 1
               fi
@@ -130,7 +139,7 @@ def deploy(Closure cl) {
             # e.g. some manual override has happened.
             # If the current tag is null, we continue as that means we
             # are doing initial account/service deployment.
-            if ! jq -e ".currentTag == \\\$tag" --arg tag "${config.tag}" result >/dev/null; then
+            if jq -e ".currentTag != \\\$tag" --arg tag "${config.tag}" result >/dev/null; then
               echo "Unexpected tag - aborting"
               exit 1
             fi
