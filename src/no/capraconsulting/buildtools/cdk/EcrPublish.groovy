@@ -207,7 +207,7 @@ def pushCache(ConfigDelegate config, builtImg, String lastImageId) {
 def generateLongTag(ConfigDelegate config) {
   def now = sh([
     returnStdout: true,
-    script: "date -u +%Y%m%d-%H%M%SZ"
+    script: "date -u +%Y%m%d-%H%M%Sz"
   ]).trim()
 
   def branch = getSafeBranchName(getJenkinsBranchName())
