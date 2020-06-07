@@ -194,6 +194,8 @@ def pushCache(ConfigDelegate config, builtImg, String lastImageId) {
     echo "No new image built"
   } else {
     echo "New image seems to have been built"
+    echo "Last image ID: $lastImageId"
+    echo "New image ID: $newImageId"
     echo "Pushing Docker branch image for cache of next build using tag $cacheTag"
     builtImg.push(cacheTag)
   }
