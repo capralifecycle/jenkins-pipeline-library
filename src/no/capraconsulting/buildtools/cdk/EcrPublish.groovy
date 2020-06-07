@@ -216,3 +216,43 @@ def generateLongTag(ConfigDelegate config) {
 
   return "${config.applicationName}-$now-$branch-$build-$gitsha"
 }
+
+/**
+ * Helper to reduce boilerplate in Jenkinsfile.
+ *
+ * Special arguments that can be set:
+ *   - contextDir: The Docker context dir to use.
+ *   - dockerArgs: Additional arguments passed to docker build command.
+ *
+ * Returns a list of [img, isSameImageAsLast].
+ */
+def buildImage(ConfigDelegate config, Map args = [:]) {
+  def img
+  def lastImageId = pullCache(config)
+  def contextDir = args.contextDir ?: "."
+
+  stage("Build Docker image") {
+    def dockerArgs = ""
+    if (params.dockerSkipCache) {
+      dockerArgs = " --no-cache"
+    }
+    if (args.dockerArgs != null) {
+      dockerArgs = " ${args.dockerArgs}"
+    }
+    img = docker.build(config.repositoryUri, "--cache-from $lastImageId$dockerArgs --pull $contextDir")
+  }
+
+  def isSameImageAsLast = pushCache(config, img, lastImageId)
+  return [img, isSameImageAsLast]
+}
+
+/**
+ * Helper for setting dockerSkipCache param.
+ */
+def dockerSkipCacheParam() {
+  return booleanParam(
+    defaultValue: false,
+    description: "Force build without Docker cache",
+    name: "dockerSkipCache"
+  )
+}
