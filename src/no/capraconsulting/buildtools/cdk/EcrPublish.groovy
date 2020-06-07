@@ -182,7 +182,7 @@ def pushCache(ConfigDelegate config, builtImg, String lastImageId) {
 
   def newImageId = sh([
     returnStdout: true,
-    script: "docker images -q ${builtImg.id}"
+    script: "docker images -q ${builtImg.id} | head -1"
   ]).trim()
 
   echo "History of image:"
