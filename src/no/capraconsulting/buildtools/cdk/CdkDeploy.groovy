@@ -21,8 +21,7 @@ Sketch of usage - leaving out details outside scope of this:
 
   def cdkDeploy = new CdkDeploy()
   def deploy = cdkDeploy.createDeployFn {
-    bucketName = "my-bucket"
-    bucketKey = "414fb2ca392.tgz"
+    cloudAssemblyS3Url = "s3://my-bucket/414fb2ca392.zip"
     deployFunctionArn = "arn:aws:lambda:eu-west-1:112233445566:function:staging-deploy-fn"
     statusFunctionArn = "arn:aws:lambda:eu-west-1:112233445566:function:staging-status-fn"
     roleArn = "arn:aws:iam::112233445566:role/staging-deploy-role"
@@ -60,8 +59,11 @@ Sketch of usage - leaving out details outside scope of this:
 */
 
 class CreateDeployFnDelegate implements Serializable {
+  /** @deprecated see cloudAssemblyS3Url */
   String bucketName
+  /** @deprecated see cloudAssemblyS3Url */
   String bucketKey
+  String cloudAssemblyS3Url
   String roleArn
   String deployFunctionArn
   String statusFunctionArn
@@ -84,10 +86,12 @@ def createDeployFn(Closure cl) {
   cl.delegate = config
   cl()
 
+  def cloudAssemblyS3Url = config.cloudAssemblyS3Url
+    ?: "s3://${config.bucketName}/${config.bucketKey}"
+
   return { stacks ->
     _deploy(
-      config.bucketName,
-      config.bucketKey,
+      cloudAssemblyS3Url,
       config.roleArn,
       config.deployFunctionArn,
       config.statusFunctionArn,
@@ -112,14 +116,14 @@ def withLock(Closure cl, Closure body) {
 }
 
 // Internal method.
-def _deploy(
-  bucketName,
-  bucketKey,
+private def _deploy(
+  cloudAssemblyS3Url,
   roleArn,
   deployFunctionArn,
   statusFunctionArn,
   stackNames
 ) {
+  def (bucketName, bucketKey) = Util._decomposeBucketUrl(cloudAssemblyS3Url)
   def region = Util._getFunctionRegion(deployFunctionArn)
 
   // TODO: Consider releasing the node between sleeps or set up

@@ -10,3 +10,13 @@ static def _getFunctionRegion(String functionArn) {
   }
   return result.group(1)
 }
+
+static def _decomposeBucketUrl(String value) {
+  def m = value =~ /^s3:\/\/([^\/]+)\/(.+)$/
+  if (!m.matches()) {
+    throw new RuntimeException("Could not extract bucket name and key from $value")
+  }
+  def bucketName = m[0][1]
+  def bucketKey = m[0][2]
+  return [bucketName, bucketKey]
+}
