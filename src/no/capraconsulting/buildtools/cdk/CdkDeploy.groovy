@@ -73,6 +73,11 @@ class WithLockDelegate implements Serializable {
   String lockName
 }
 
+class CreateAndUploadCloudAssemblyDelegate implements Serializable {
+  String roleArn
+  String bucketName
+}
+
 def createDeployFn(Closure cl) {
   def config = new CreateDeployFnDelegate()
   cl.resolveStrategy = Closure.DELEGATE_FIRST
@@ -195,4 +200,36 @@ def _deploy(
       }
     }
   }
+}
+
+/**
+ * Run cdk synth to produce a Cloud Assembly and upload this to S3.
+ *
+ * Returns the S3 url for the uploaded Cloud Assembly zip file.
+ */
+def createAndUploadCloudAssembly(Closure cl) {
+  def config = new CreateAndUploadCloudAssemblyDelegate()
+  cl.resolveStrategy = Closure.DELEGATE_FIRST
+  cl.delegate = config
+  cl()
+
+  sh """
+    rm -rf cdk.out
+    npm run cdk -- synth >/dev/null
+    cd cdk.out
+    zip -r ../cloud-assembly.zip .
+  """
+
+  def sha256 = sh([
+    returnStdout: true,
+    script: "sha256sum cloud-assembly.zip | awk '{print \$1}'"
+  ]).trim()
+
+  def s3Url = "s3://${config.bucketName}/cloud-assembly/${sha256}.zip"
+
+  withAwsRole(config.roleArn) {
+    sh "aws s3 cp cloud-assembly.zip $s3Url"
+  }
+
+  return s3Url
 }
