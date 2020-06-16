@@ -1,6 +1,26 @@
 #!/usr/bin/groovy
 package no.capraconsulting.buildtools.sonarcloud
 
+import groovy.json.JsonOutput
+
+/**
+ * Provide the environment variable SONARQUBE_SCANNER_PARAMS
+ * that is picked up by the Sonar Scanner Maven plugin,
+ * containing information about the current build, including
+ * authentication to SonarCloud, branch details and pull
+ * request details.
+ *
+ * See https://github.com/SonarSource/sonar-scanner-api/blob/49f8f2ade8c9f862a80480b7deca730d3e3ac8cf/api/src/main/java/org/sonarsource/scanner/api/Utils.java#L48
+ */
+def withEnvForMaven(body) {
+  withSonarCloudCredentials {
+    def json = JsonOutput.toJson(getBaseProperties())
+    withEnv(["SONARQUBE_SCANNER_PARAMS=$json"]) {
+      body()
+    }
+  }
+}
+
 /**
  * Analyze the project using SonarScanner and upload to SonarCloud.
  *
