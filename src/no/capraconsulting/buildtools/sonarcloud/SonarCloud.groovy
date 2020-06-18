@@ -109,19 +109,12 @@ private def getBaseProperties() {
     p['sonar.pullrequest.provider'] = 'GitHub'
     p['sonar.pullrequest.github.repository'] = orgAndRepo
 
+    def utils = new no.capraconsulting.buildtools.Utils()
+
     // Detect the actual commit that is used. Jenkins will create a
     // merge commit when doing pr-merge strategy which SonarCloud will
     // never know about.
-    p['sonar.scm.revision'] = sh(
-      returnStdout: true,
-      script: '''
-        if git show -s --format=%s HEAD | grep -q '^Merge commit '; then
-          git rev-parse HEAD~1
-        else
-          git rev-parse HEAD
-        fi
-      ''',
-    ).trim()
+    p['sonar.scm.revision'] = utils.getSourceGitCommit()
   } else {
     // https://sonarcloud.io/documentation/branches/overview/
     p['sonar.branch.name'] = env.BRANCH_NAME

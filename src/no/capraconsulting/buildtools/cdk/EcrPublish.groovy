@@ -67,55 +67,18 @@ private def getRepositoryServer(ConfigDelegate config) {
 }
 
 /**
- * Get a safe string value of the branch name that can be
- * used in paths, artifact names etc.
- */
-private def getSafeBranchName(branchName) {
-  return branchName.replaceAll(/[^a-zA-Z0-9\\-]/, "-")
-}
-
-/**
- * Detect the actual commit that is used. Jenkins will create a
- * merge commit when doing pr-merge strategy, which we are not
- * interested in as it is only transient.
- */
-private def getSourceGitCommitSha() {
-  return sh(
-    returnStdout: true,
-    script: '''
-      if git show -s --format=%s HEAD | grep -q '^Merge commit '; then
-        git rev-parse HEAD~1
-      else
-        git rev-parse HEAD
-      fi
-    ''',
-  ).trim()
-}
-
-/**
- * Get the branch name that Jenkins uses. For PR builds this
- * is not actual the Git branch name, but the job name used,
- * e.g. PR-1.
- *
- * TOOD: Consider retrieving the actual branch name for PR.
- */
-private def getJenkinsBranchName() {
-  // TODO: Check for null?
-  return env.BRANCH_NAME
-}
-
-/**
  * Get list of tags used for cache.
  *
  * The first tag is the primary tag used, but other tags
  * will be read if primary is missing.
  */
 private def getCacheTags(ConfigDelegate config) {
+  def utils = new no.capraconsulting.buildtools.Utils()
   def tag = "ci-cache-${config.applicationName}"
 
   if (env.BRANCH_NAME != null && env.BRANCH_NAME != "master") {
     return [
-      tag + "-" + getSafeBranchName(env.BRANCH_NAME),
+      tag + "-" + utils.getSafeBranchName(env.BRANCH_NAME),
       tag
     ]
   }
@@ -207,17 +170,10 @@ def pushCache(ConfigDelegate config, builtImg, String lastImageId) {
  * Generate tag to be used for pushed image.
  */
 def generateLongTag(ConfigDelegate config) {
-  def now = sh([
-    returnStdout: true,
-    script: "date -u +%Y%m%d-%H%M%Sz"
-  ]).trim()
-
-  def branch = getSafeBranchName(getJenkinsBranchName())
-  def build = env.BUILD_NUMBER
-  def gitsha = getSourceGitCommitSha().take(7)
-
-  return "${config.applicationName}-$now-$branch-$build-$gitsha"
+  def utils = new no.capraconsulting.buildtools.Utils()
+  return "${config.applicationName}-${utils.generateLongTag(new Date())}"
 }
+
 
 /**
  * Helper to reduce boilerplate in Jenkinsfile.
