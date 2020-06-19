@@ -139,7 +139,9 @@ def deploy(Closure cl) {
             # e.g. some manual override has happened.
             # If the current tag is null, we continue as that means we
             # are doing initial account/service deployment.
-            if jq -e ".currentTag != \\\$tag" --arg tag "${config.tag}" result >/dev/null; then
+            if jq -e ".currentTag != null and .currentTag != \\\$tag" --arg tag "${config.tag}" result >/dev/null; then
+              echo "Response:"
+              cat result
               echo "Unexpected tag - aborting"
               exit 1
             fi
