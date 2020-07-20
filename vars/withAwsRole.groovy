@@ -10,22 +10,37 @@
  * variable when running the container. E.g.:
  *
  *   myImage.inside('-e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI') {
- *     withAwsRole('arn:....') {
+ *     withAwsRole(roleArn: 'arn:....') {
  *       sh 'aws sts get-caller-identity'
  *     }
  *   }
  *
- * @param roleArn A full ARN of a role, e.g. arn:aws:iam::123456789123:role/some-role.
+ * @param roleArnOrArgs A full ARN of a role, e.g. arn:aws:iam::123456789123:role/some-role
+                        or a map with at least roleArn and optionally a timeout in seconds.
  * @param body Closure to be called
  */
-def call(roleArn, body) {
+def call(roleArnOrArgs, body) {
+  def args = roleArnOrArgs instanceof String
+    ? [roleArn: roleArnOrArgs]
+    : roleArnOrArgs
+
+  if (!args.containsKey("roleArn")) {
+    throw new RuntimeException("Missing roleArn as arg")
+  }
+  def roleArn = args["roleArn"]
+
   // Using 900 seconds as that is the minimum duration.
+  def timeout = args["timeout"] ?: 900
+  if (!(timeout instanceof Integer)) {
+    throw new RuntimeException("timeout should be an Integer")
+  }
+
   credentials = sh(
     script: """
       aws sts assume-role \\
         --role-arn "$roleArn" \\
         --role-session-name jenkins-build \\
-        --duration-seconds 900 \\
+        --duration-seconds $timeout \\
         --out text \\
         --query 'Credentials.[AccessKeyId, SecretAccessKey, SessionToken]'
     """,
