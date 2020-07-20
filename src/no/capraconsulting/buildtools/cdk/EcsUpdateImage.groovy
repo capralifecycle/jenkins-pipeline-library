@@ -74,7 +74,7 @@ def deploy(Closure cl) {
     // TODO: Consider releasing the node between sleeps or set up
     //  more lightweight executors for this use case.
     dockerNode {
-      withAwsRole(config.roleArn) {
+      withAwsRole(roleArn: config.roleArn, timeout: 3600) {
         timeout(time: 60) {
           sh """
             # Reduce noise in build log.
