@@ -20,7 +20,7 @@
  * @param body Closure to be called
  */
 def call(roleArnOrArgs, body) {
-  def args = roleArnOrArgs instanceof String
+  def args = roleArnOrArgs instanceof CharSequence
     ? [roleArn: roleArnOrArgs]
     : roleArnOrArgs
 
