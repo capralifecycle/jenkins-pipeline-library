@@ -12,6 +12,10 @@ def call(Map args, Closure body) {
     throw new RuntimeException("Missing project as arg")
   }
 
+  if (args.skipEnv) {
+    return body()
+  }
+
   withEnv(["SENTRY_ORG=liflig", "SENTRY_PROJECT=${args.project}"]) {
     withCredentials([
       string(
