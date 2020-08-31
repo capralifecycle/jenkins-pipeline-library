@@ -11,6 +11,8 @@ def createBuild(Closure cl) {
   cl.delegate = buildConfig
   cl()
 
+  echo "$buildConfig"
+
   // Verify build config requirements that must be set/changed.
   checkNotNull(buildConfig.dockerBuildImage, 'dockerBuildImage')
 
