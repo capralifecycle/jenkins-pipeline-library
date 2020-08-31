@@ -1,7 +1,7 @@
 #!/usr/bin/groovy
 package no.capraconsulting.buildtools.mavensimplelibpipeline
 
-def simpleLibPipeline(Closure cl) {
+def pipeline(Closure cl) {
   def config = new ConfigDelegate()
   cl.resolveStrategy = Closure.DELEGATE_FIRST
   cl.delegate = config
@@ -96,13 +96,13 @@ class CreateBuildDelegate implements Serializable {
 
 private Boolean changedSinceLatestTag() {
   String currentCommit = headCommitHash()
-  String previousTag = previousTagLabel()
-  String commitOfPreviousTag = underlyingCommit(previousTag)
-  echo "CurrentCommit: ${currentCommit}"
-  echo "PreviousTag: ${previousTag}"
-  echo "PreviousTagCommit: ${commitOfPreviousTag}"
+  String latestTag = previousTagLabel()
+  String commitOfLatestTag = underlyingCommit(latestTag)
+  echo "Current commit: ${currentCommit}"
+  echo "Latest tag: ${latestTag}"
+  echo "Latest tag underlying commit: ${commitOfLatestTag}"
 
-  def hasChange = currentCommit != commitOfPreviousTag
+  def hasChange = currentCommit != commitOfLatestTag
   if (hasChange)
     echo "Build has change."
   else
