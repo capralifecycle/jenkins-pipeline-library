@@ -74,19 +74,21 @@ class CreateBuildDelegate implements Serializable {
 }
 
 private Boolean changedSinceLatestTag() {
-  String currentCommit = headCommitHash()
-  String latestTag = previousTagLabel()
-  String commitOfLatestTag = underlyingCommit(latestTag)
-  echo "Current commit: ${currentCommit}"
-  echo "Latest tag: ${latestTag}"
-  echo "Latest tag underlying commit: ${commitOfLatestTag}"
+  withGitConfig {
+    String currentCommit = headCommitHash()
+    String latestTag = previousTagLabel()
+    String commitOfLatestTag = underlyingCommit(latestTag)
+    echo "Current commit: ${currentCommit}"
+    echo "Latest tag: ${latestTag}"
+    echo "Latest tag underlying commit: ${commitOfLatestTag}"
 
-  def hasChange = currentCommit != commitOfLatestTag
-  if (hasChange)
-    echo "Build has change."
-  else
-    echo "Build has no change."
-  hasChange
+    def hasChange = currentCommit != commitOfLatestTag
+    if (hasChange)
+      echo "Build has change."
+    else
+      echo "Build has no change."
+    hasChange
+  }
 }
 
 /**
@@ -121,14 +123,12 @@ private String headCommitHash() {
 }
 
 def withMavenDeployVersionByTimeEnv(body) {
-  withGitConfig {
-    withMavenSettings {
-      String majorVersion = readMavenPom().getProperties()['major-version']
-      String revision = revision(majorVersion)
+  withMavenSettings {
+    String majorVersion = readMavenPom().getProperties()['major-version']
+    String revision = revision(majorVersion)
 
-      withEnv(["revision=$revision"]) {
-        body(revision)
-      }
+    withEnv(["revision=$revision"]) {
+      body(revision)
     }
   }
 }
