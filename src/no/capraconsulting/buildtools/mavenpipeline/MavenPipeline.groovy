@@ -1,5 +1,5 @@
 #!/usr/bin/groovy
-package no.capraconsulting.buildtools.maven
+package no.capraconsulting.buildtools.mavenpipeline
 
 def pipeline(Closure cl) {
   def config = new ConfigDelegate()
