@@ -1,23 +1,5 @@
 #!/usr/bin/groovy
-package no.capraconsulting.buildtools.maven
-
-import no.capraconsulting.buildtools.maven.ConfigDelegate
-import no.capraconsulting.buildtools.maven.CreateBuildDelegate
-
-import static no.capraconsulting.buildtools.maven.MavenPipeline.checkNotNull as checkNotNull
-
-
-//@Library('cals') _
-//
-//import no.capraconsulting.buildtools.mavenpipeline.MavenPipeline
-//
-//def p = new MavenPipeline()
-//p.pipeline {
-//  build = p.createBuild {
-//    dockerBuildImage = toolImageDockerReference('maven:3-jdk-8-alpine')
-//  }
-//}
-
+package no.capraconsulting.buildtools.mavensimplelibpipeline
 
 def simpleLibPipeline(Closure cl) {
   def config = new ConfigDelegate()
@@ -31,11 +13,24 @@ def simpleLibPipeline(Closure cl) {
     config.build.call(config)
   }
 }
-//void checkNotNull(value, name) {
-//  if (value == null) {
-//    throw Exception("$name must be set")
-//  }
-//}
+
+class ConfigDelegate implements Serializable {
+  /**
+   * The build process. It will be called with the current config
+   * as its first argument.
+   */
+  Closure build
+  /**
+   * Parameters passed to `buildConfig`.
+   */
+  Map buildConfigParams = [:]
+}
+
+void checkNotNull(value, name) {
+  if (value == null) {
+    throw Exception("$name must be set")
+  }
+}
 
 def createBuild(Closure cl) {
   def buildConfig = new CreateBuildDelegate()
@@ -83,21 +78,21 @@ def createBuild(Closure cl) {
   return build
 }
 
-//class CreateBuildDelegate implements Serializable {
-//  /** Optional override of Jenkins slave node label. */
-//  String dockerNodeLabel
-//  String dockerBuildImage
-//  /** Optional extra args to mvn command. */
-//  String mavenArgs = ''
-//  /** The goal targeted. */
-//  String mavenGoals = 'verify'
-//  /**
-//   * Docker build process. Most of our services we build with Maven
-//   * builds a Docker image that will be run in an environment.
-//   * Optional.
-//   */
-//  Closure dockerBuild
-//}
+class CreateBuildDelegate implements Serializable {
+  /** Optional override of Jenkins slave node label. */
+  String dockerNodeLabel
+  String dockerBuildImage
+  /** Optional extra args to mvn command. */
+  String mavenArgs = ''
+  /** The goal targeted. */
+  String mavenGoals = 'verify'
+  /**
+   * Docker build process. Most of our services we build with Maven
+   * builds a Docker image that will be run in an environment.
+   * Optional.
+   */
+  Closure dockerBuild
+}
 
 private Boolean changedSinceLatestTag() {
   String currentCommit = headCommitHash()
