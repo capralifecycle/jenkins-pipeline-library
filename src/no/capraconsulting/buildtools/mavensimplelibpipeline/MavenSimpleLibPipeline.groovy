@@ -2,34 +2,7 @@
 package no.capraconsulting.buildtools.mavensimplelibpipeline
 
 def pipeline(Closure cl) {
-  def config = new ConfigDelegate()
-  cl.resolveStrategy = Closure.DELEGATE_FIRST
-  cl.delegate = config
-  cl()
-
-  checkNotNull(config.build, 'build')
-
-  buildConfig(config.buildConfigParams) {
-    config.build.call(config)
-  }
-}
-
-class ConfigDelegate implements Serializable {
-  /**
-   * The build process. It will be called with the current config
-   * as its first argument.
-   */
-  Closure build
-  /**
-   * Parameters passed to `buildConfig`.
-   */
-  Map buildConfigParams = [:]
-}
-
-void checkNotNull(value, name) {
-  if (value == null) {
-    throw Exception("$name must be set")
-  }
+  createBuild(cl)
 }
 
 def createBuild(Closure cl) {
@@ -76,6 +49,12 @@ def createBuild(Closure cl) {
   }
 
   return build
+}
+
+void checkNotNull(value, name) {
+  if (value == null) {
+    throw Exception("$name must be set")
+  }
 }
 
 class CreateBuildDelegate implements Serializable {
