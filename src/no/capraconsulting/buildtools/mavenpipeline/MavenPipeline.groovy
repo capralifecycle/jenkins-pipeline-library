@@ -166,7 +166,7 @@ def createDockerBuild(Closure cl = null) {
 
 void checkNotNull(value, name) {
   if (value == null) {
-    throw Exception("$name must be set")
+    throw new Exception("$name must be set")
   }
 }
 
