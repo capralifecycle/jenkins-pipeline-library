@@ -1,5 +1,5 @@
 #!/usr/bin/groovy
-package no.capraconsulting.buildtools.maven
+package no.capraconsulting.buildtools.mavenpipeline
 
 def pipeline(Closure cl) {
   def config = new ConfigDelegate()
@@ -166,7 +166,7 @@ def createDockerBuild(Closure cl = null) {
 
 void checkNotNull(value, name) {
   if (value == null) {
-    throw Exception("$name must be set")
+    throw new Exception("$name must be set")
   }
 }
 
