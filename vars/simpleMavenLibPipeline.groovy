@@ -77,7 +77,7 @@ private String headCommitHash() {
   ).trim()
 }
 
-def withMavenDeployVersionByTimeEnv(body) {
+private def withMavenDeployVersionByTimeEnv(body) {
   withMavenSettings {
     String majorVersion = readMavenPom().getProperties()['major-version']
     String revision = revision(majorVersion)
