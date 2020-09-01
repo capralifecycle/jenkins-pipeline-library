@@ -18,10 +18,13 @@ def call(Map args) {
           String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
             ? "source:jar deploy scm:tag"
             : "verify"
-          sh """
+
+          withGitConfig {
+            sh """
               mvn -s \$MAVEN_SETTINGS -B org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps
               mvn -s \$MAVEN_SETTINGS -B -Dtag=$revision -Drevision=$revision $goal
-          """
+            """
+          }
         }
       }
     }
