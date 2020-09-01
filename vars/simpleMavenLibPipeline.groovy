@@ -1,7 +1,6 @@
 #!/usr/bin/groovy
 
-// TODO: Is body needed or can it be removed?
-def call(Map args, Closure body) {
+def call(Map args) {
   String dockerBuildImage = args["dockerBuildImage"]
     ?: { throw new RuntimeException("Missing arg: dockerBuildImage") }()
 
@@ -19,29 +18,18 @@ def call(Map args, Closure body) {
         checkout scm
       }
 
-      try {
-        stage('Build and conditionally release') {
-          withMavenDeployVersionByTimeEnv { String revision ->
-            String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
-              ? "source:jar deploy scm:tag"
-              : "verify"
-            sh """
-                        mvn -s \$MAVEN_SETTINGS org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps
-                        mvn -s \$MAVEN_SETTINGS -B -Dtag=$revision -Drevision=$revision $goal
-                    """
-          }
+      stage('Build and conditionally release') {
+        withMavenDeployVersionByTimeEnv { String revision ->
+          String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
+            ? "source:jar deploy scm:tag"
+            : "verify"
+          sh """
+              mvn -s \$MAVEN_SETTINGS org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps
+              mvn -s \$MAVEN_SETTINGS -B -Dtag=$revision -Drevision=$revision $goal
+          """
         }
-      } finally {
-        // TODO: Needed?
-        // saveJunitReport()
-        // saveJacocoReport()
       }
     }
-
-    // TODO: What is this for?
-    // if (buildConfig.dockerBuild) {
-    //    buildConfig.dockerBuild.call()
-    // }
   }
 }
 
