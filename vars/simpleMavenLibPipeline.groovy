@@ -94,5 +94,3 @@ private static String revision(String majorVersion) {
   def buildTime = now.format("HHmmss", TimeZone.getTimeZone("UTC"))
   "$majorVersion.$buildDate.$buildTime"
 }
-
-
