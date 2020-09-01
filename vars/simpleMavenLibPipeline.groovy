@@ -1,5 +1,33 @@
 #!/usr/bin/groovy
 
+/**
+ * Pipeline that creates release when master branch has changes since latest tag.
+ * For other branches the build is only verified.
+ *
+ * Release is not tagged with semantic versioning, but rather by date and time and is referred to as
+ * "revision". TODO: Link to concept.
+ *
+ * Requirements in pom.xml:
+ *
+ *    <project>
+ *
+ *     <version>${revision}</version>
+ *
+ *     <scm>
+ *         <developerConnection>scm:git:https://github.com/<PATH_TO_REPO>.git</developerConnection>
+ *         <connection>scm:git:https://github.com/<PATH_TO_REPO>.git</connection>
+ *         <url>https://github.com/<PATH_TO_REPO></url>
+ *         <tag>HEAD</tag>
+ *     </scm>
+ *
+ *     <properties>
+ *         <!-- Increment major version for breaking changes -->
+ *         <major-version>1</major-version>
+ *         <revision>${major-version}.local-SNAPSHOT</revision>
+ *         ..
+ *     </properties>
+ *    </project>
+ */
 def call(Map args) {
   String dockerBuildImage = args["dockerBuildImage"]
     ?: { throw new RuntimeException("Missing arg: dockerBuildImage") }()
