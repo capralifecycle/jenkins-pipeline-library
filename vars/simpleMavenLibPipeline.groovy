@@ -5,7 +5,7 @@ def call(Map args, Closure body) {
   String dockerBuildImage = args["dockerBuildImage"]
     ?: { throw new RuntimeException("Missing arg: dockerBuildImage") }()
 
-  def dockerNodeLabel = args["dockerNodeLabel"] ?: "docker"
+  String dockerNodeLabel = args["dockerNodeLabel"] ?: "docker"
 
   echo "${dockerBuildImage}"
   echo "${dockerNodeLabel}"
