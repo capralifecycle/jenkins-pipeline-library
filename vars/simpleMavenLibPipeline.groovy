@@ -1,78 +1,48 @@
 #!/usr/bin/groovy
-package no.capraconsulting.buildtools.mavensimplelibpipeline
 
-def pipeline(Closure cl) {
-  createBuild(cl)
-}
+// TODO: Is body needed or can it be removed?
+def call(Map args, Closure body) {
+  String dockerBuildImage = args["dockerBuildImage"]
+    ?: { throw new RuntimeException("Missing arg: dockerBuildImage") }()
 
-def createBuild(Closure cl) {
-  def buildConfig = new CreateBuildDelegate()
-  cl.resolveStrategy = Closure.DELEGATE_FIRST
-  cl.delegate = buildConfig
-  cl()
+  def dockerNodeLabel = args["dockerNodeLabel"] ?: "docker"
 
-  echo "${buildConfig.dockerBuildImage}"
+  echo "${dockerBuildImage}"
+  echo "${dockerNodeLabel}"
 
-  // Verify build config requirements that must be set/changed.
-  checkNotNull(buildConfig.dockerBuildImage, 'dockerBuildImage')
+  dockerNode([label: dockerNodeLabel]) {
+    def buildImage = docker.image(dockerBuildImage)
+    buildImage.pull() // Ensure latest version
 
-  def build = { config ->
-    dockerNode([label: buildConfig.dockerNodeLabel]) {
-      def buildImage = docker.image(buildConfig.dockerBuildImage)
-      buildImage.pull() // Ensure latest version
+    buildImage.inside {
+      stage('Checkout source') {
+        checkout scm
+      }
 
-      buildImage.inside {
-        stage('Checkout source') {
-          checkout scm
-        }
-
-        try {
-          stage('Build and conditionally release') {
-            withMavenDeployVersionByTimeEnv { String revision ->
-              String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
-                ? "source:jar deploy scm:tag"
-                : "verify"
-              sh """
+      try {
+        stage('Build and conditionally release') {
+          withMavenDeployVersionByTimeEnv { String revision ->
+            String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
+              ? "source:jar deploy scm:tag"
+              : "verify"
+            sh """
                         mvn -s \$MAVEN_SETTINGS org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps
                         mvn -s \$MAVEN_SETTINGS -B -Dtag=$revision -Drevision=$revision $goal
                     """
-            }
           }
-        } finally {
-//          saveJunitReport()
-//          saveJacocoReport()
         }
-      }
-
-      if (buildConfig.dockerBuild) {
-        buildConfig.dockerBuild.call()
+      } finally {
+        // TODO: Needed?
+        // saveJunitReport()
+        // saveJacocoReport()
       }
     }
+
+    // TODO: What is this for?
+    // if (buildConfig.dockerBuild) {
+    //    buildConfig.dockerBuild.call()
+    // }
   }
-
-  return build
-}
-
-void checkNotNull(value, name) {
-  if (value == null) {
-    throw new Exception("$name must be set")
-  }
-}
-
-class CreateBuildDelegate implements Serializable {
-  /** Optional override of Jenkins slave node label. */
-  String dockerNodeLabel
-  String dockerBuildImage
-  /** Optional extra args to mvn command. */
-  String mavenArgs = ''
-  /** The goal targeted. */
-  String mavenGoals = 'verify'
-  /**
-   * Docker build process. Most of our services we build with Maven
-   * builds a Docker image that will be run in an environment.
-   * Optional.
-   */
-  Closure dockerBuild
 }
 
 private Boolean changedSinceLatestTag() {
@@ -141,4 +111,5 @@ private static String revision(String majorVersion) {
   def buildTime = now.format("HHmmss", TimeZone.getTimeZone("UTC"))
   "$majorVersion.$buildDate.$buildTime"
 }
+
 
