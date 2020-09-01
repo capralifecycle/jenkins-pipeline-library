@@ -4,12 +4,7 @@ def call(Map args) {
   String dockerBuildImage = args["dockerBuildImage"]
     ?: { throw new RuntimeException("Missing arg: dockerBuildImage") }()
 
-  String dockerNodeLabel = args["dockerNodeLabel"] ?: "docker"
-
-  echo "${dockerBuildImage}"
-  echo "${dockerNodeLabel}"
-
-  dockerNode([label: dockerNodeLabel]) {
+  dockerNode([label: args["dockerNodeLabel"]]) {
     def buildImage = docker.image(dockerBuildImage)
     buildImage.pull() // Ensure latest version
 
