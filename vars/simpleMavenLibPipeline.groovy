@@ -29,21 +29,19 @@ def call(Map args) {
 }
 
 private Boolean changedSinceLatestTag() {
-  withGitConfig {
-    String currentCommit = headCommitHash()
-    String latestTag = previousTagLabel()
-    String commitOfLatestTag = underlyingCommit(latestTag)
-    echo "Current commit: ${currentCommit}"
-    echo "Latest tag: ${latestTag}"
-    echo "Latest tag underlying commit: ${commitOfLatestTag}"
+  String currentCommit = headCommitHash()
+  String latestTag = previousTagLabel()
+  String commitOfLatestTag = underlyingCommit(latestTag)
+  echo "Current commit: ${currentCommit}"
+  echo "Latest tag: ${latestTag}"
+  echo "Latest tag underlying commit: ${commitOfLatestTag}"
 
-    def hasChange = currentCommit != commitOfLatestTag
-    if (hasChange)
-      echo "Build has change."
-    else
-      echo "Build has no change."
-    hasChange
-  }
+  def hasChange = currentCommit != commitOfLatestTag
+  if (hasChange)
+    echo "Build has change."
+  else
+    echo "Build has no change."
+  hasChange
 }
 
 /**
