@@ -4,8 +4,9 @@
  * Pipeline that creates release when master branch has changes since latest tag.
  * For other branches the build is only verified.
  *
- * Release is not tagged with semantic versioning, but rather by date and time and is referred to as
- * "revision". TODO: Link to concept.
+ * Release is not tagged with semantic versioning, but rather continuous versioning by major version plus
+ * date and time and is referred to as "revision".
+ * See "Løpende"-category here for more information: https://confluence.capraconsulting.no/x/6ZcBC.
  *
  * Requirements in pom.xml:
  *
