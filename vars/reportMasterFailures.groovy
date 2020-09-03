@@ -18,8 +18,8 @@ def call(Map args, Closure body) {
     if (env.BRANCH_NAME == "master") {
       slackNotify(
         color: "danger",
-        channel: channel,
-        message: "$what part of <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]> failed",
+        channel: args.channel,
+        message: "${args.what} part of <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]> failed",
       )
     }
     throw e
