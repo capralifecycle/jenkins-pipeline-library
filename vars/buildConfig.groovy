@@ -72,7 +72,7 @@ def _slackNotifyBuild(body) {
     currentBuild.result = 'FAILURE'
     throw e
   } finally {
-    if (notifyAll || env.BRANCH_NAME == defaultBranch) {
+    if (notifyAll || (env.BRANCH_NAME == defaultBranch && currentBuild.result == 'FAILURE')) {
       slackNotifyBuild([ buildStatus: currentBuild.result ])
     }
   }
