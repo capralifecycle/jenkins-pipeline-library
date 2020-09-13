@@ -1,7 +1,18 @@
 #!/usr/bin/groovy
 
 /**
- * Generic configuration for jobs
+ * Generic configuration for jobs.
+ *
+ * To make a job send a message to Slack on failures, set:
+ *
+ *   slack:
+ *     channel: #channel
+ *     teamDomain: liflig (optional, default to liflig)
+ *     notifyAll: false (notify all branch builds) (optional, default to false)
+ *     defaultBranch: master (branch on which to report failures) (optional, defaults to master)
+ *
+ * If a job is more complex and having multiple stages, consider using
+ * the reportMasterFailures method instead.
  */
 def call(Map parameters = [:], body) {
   // Persist parameters to be available in other library functions
@@ -47,15 +58,23 @@ def _slackNotifyBuild(body) {
     return
   }
 
-  // Notify Slack before and after we process the body
+  // We default to only notify failures on the default branch
+  // to produce less noise.
+  def notifyAll = params.notifyAll ?: false
+  def defaultBranch = params.defaultBranch ?: "master"
+
   try {
-    slackNotifyBuild([ buildStatus: 'STARTED' ])
+    if (notifyAll) {
+      slackNotifyBuild([ buildStatus: 'STARTED' ])
+    }
     body()
   } catch (e) {
     currentBuild.result = 'FAILURE'
     throw e
   } finally {
-    slackNotifyBuild([ buildStatus: currentBuild.result ])
+    if (notifyAll || env.BRANCH_NAME == defaultBranch) {
+      slackNotifyBuild([ buildStatus: currentBuild.result ])
+    }
   }
 }
 
