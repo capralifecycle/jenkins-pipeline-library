@@ -2,6 +2,8 @@
 package no.capraconsulting.buildtools.cdk
 
 /*
+DEPRECATED: Use EcrPublishV2.
+
 This file covers usage of ECR repositories shared across multiple
 applications, where the ECR repository is located in another account.
 
