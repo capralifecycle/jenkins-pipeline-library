@@ -13,18 +13,17 @@ Sketch of usage - leaving out details outside scope of this:
   def p = new EcrPublish()
   def config = p.config {
     repositoryUri = "112233445566.dkr.ecr.eu-west-1.amazonaws.com/some-repo"
-    applicationName = "some-app-name"
     roleArn = "arn:aws:iam::112233445566:role/build-role"
   }
 
   dockerNode {
     def tagName
     p.withEcrLogin(config) {
-      def lastImageId = p.pullCache(config)
+      def lastImageId = p.pullCache(config, "application-name")
       def img = docker.build(config.repositoryUri, "--cache-from $lastImageId --pull .")
-      def isSameImage = p.pushCache(config, img, lastImageId)
+      def isSameImage = p.pushCache("application-name", img, lastImageId)
       if (!isSameImage) {
-        tagName = p.generateLongTag(config)
+        tagName = p.generateLongTag("application-name")
         img.push(tagName)
       }
     }
@@ -33,7 +32,6 @@ Sketch of usage - leaving out details outside scope of this:
 
 class ConfigDelegate implements Serializable {
   String repositoryUri
-  String applicationName
   /** Optional. Needed for withEcrLogin. */
   String roleArn
 }
@@ -72,9 +70,9 @@ private def getRepositoryServer(ConfigDelegate config) {
  * The first tag is the primary tag used, but other tags
  * will be read if primary is missing.
  */
-private def getCacheTags(ConfigDelegate config) {
+private def getCacheTags(applicationName) {
   def utils = new no.capraconsulting.buildtools.Utils()
-  def tag = "ci-cache-${config.applicationName}"
+  def tag = "ci-cache-$applicationName"
 
   if (env.BRANCH_NAME != null && env.BRANCH_NAME != "master") {
     return [
@@ -106,9 +104,9 @@ def withEcrLogin(ConfigDelegate config, Closure body) {
 /**
  * Try to pull cache and return the image ID if found and pulled.
  */
-def pullCache(ConfigDelegate config) {
+def pullCache(ConfigDelegate config, String applicationName) {
   def lastImageId
-  def cacheTags = getCacheTags(config)
+  def cacheTags = getCacheTags(applicationName)
 
   echo "Trying to pull possible cache image"
   for (int i = 0; i < cacheTags.size(); i++) {
@@ -140,8 +138,8 @@ def pullCache(ConfigDelegate config) {
  * Push the specified image as cache for next run. Returns a
  * boolean if the built image is the same as previously.
  */
-def pushCache(ConfigDelegate config, builtImg, String lastImageId) {
-  def cacheTag = getCacheTags(config)[0] // Primary tag
+def pushCache(applicationName, builtImg, String lastImageId) {
+  def cacheTag = getCacheTags(applicationName)[0] // Primary tag
 
   def newImageId = sh([
     returnStdout: true,
@@ -169,14 +167,18 @@ def pushCache(ConfigDelegate config, builtImg, String lastImageId) {
 /**
  * Generate tag to be used for pushed image.
  */
-def generateLongTag(ConfigDelegate config) {
+def generateLongTag(String applicationName) {
   def utils = new no.capraconsulting.buildtools.Utils()
-  return "${config.applicationName}-${utils.generateLongTag(new Date())}"
+  return "${applicationName}-${utils.generateLongTag(new Date())}"
 }
 
 
 /**
  * Helper to reduce boilerplate in Jenkinsfile.
+ *
+ * Required arguments:
+ *   - config: The ECR config.
+ *   - applicationName: The application name being built.
  *
  * Special arguments that can be set:
  *   - contextDir: The Docker context dir to use.
@@ -184,23 +186,31 @@ def generateLongTag(ConfigDelegate config) {
  *
  * Returns a list of [img, isSameImageAsLast].
  */
-def buildImage(ConfigDelegate config, Map args = [:]) {
-  def img
-  def lastImageId = pullCache(config)
-  def contextDir = args.contextDir ?: "."
-
-  stage("Build Docker image") {
-    def dockerArgs = ""
-    if (params.dockerSkipCache) {
-      dockerArgs = " --no-cache"
-    }
-    if (args.dockerArgs != null) {
-      dockerArgs = " ${args.dockerArgs}"
-    }
-    img = docker.build(config.repositoryUri, "--cache-from $lastImageId$dockerArgs --pull $contextDir")
+def buildImage(Map args = [:]) {
+  if (!args.containsKey("config")) {
+    throw new Exception("Missing config as arg")
+  }
+  if (!args.containsKey("applicationName")) {
+    throw new Exception("Missing applicationName as arg")
   }
 
-  def isSameImageAsLast = pushCache(config, img, lastImageId)
+  def img
+  def lastImageId = pullCache(args.config, args.applicationName)
+  def contextDir = args.contextDir ?: "."
+
+  def dockerArgs = ""
+  if (params.dockerSkipCache) {
+    dockerArgs = " --no-cache"
+  }
+  if (args.dockerArgs != null) {
+    dockerArgs = " ${args.dockerArgs}"
+  }
+  img = docker.build(
+    "${args.config.repositoryUri}:${args.applicationName}",
+    "--cache-from $lastImageId$dockerArgs --pull $contextDir"
+  )
+
+  def isSameImageAsLast = pushCache(args.applicationName, img, lastImageId)
   return [img, isSameImageAsLast]
 }
 
