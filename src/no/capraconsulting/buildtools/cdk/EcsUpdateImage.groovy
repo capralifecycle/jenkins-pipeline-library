@@ -49,9 +49,9 @@ Sketch of usage - leaving out details outside scope of this:
 
 class DeployDelegate implements Serializable {
   // Optional.
-  int milestone1
+  Integer milestone1
   // Optional.
-  int milestone2
+  Integer milestone2
   String lockName
   String tag
   String deployFunctionArn
