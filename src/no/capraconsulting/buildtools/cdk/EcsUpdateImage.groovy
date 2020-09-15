@@ -48,7 +48,9 @@ Sketch of usage - leaving out details outside scope of this:
 */
 
 class DeployDelegate implements Serializable {
+  // Optional.
   int milestone1
+  // Optional.
   int milestone2
   String lockName
   String tag
@@ -65,11 +67,15 @@ def deploy(Closure cl) {
 
   def region = Util._getFunctionRegion(config.deployFunctionArn)
 
-  milestone config.milestone1
+  if (config.milestone1 != null) {
+    milestone config.milestone1
+  }
 
   // Get exclusive access and use LIFO instead of FIFO.
   lock(resource: config.lockName, inversePrecedence: true) {
-    milestone config.milestone2
+    if (config.milestone2 != null) {
+      milestone config.milestone2
+    }
 
     // TODO: Consider releasing the node between sleeps or set up
     //  more lightweight executors for this use case.
