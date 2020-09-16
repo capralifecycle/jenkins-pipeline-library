@@ -32,6 +32,7 @@
  * Parameters:
  *
  *  - dockerBuildImage (required): The Docker image to use as build container
+ *  - dockerNodeLabel: Label used for Jenkins slave
  *  - buildConfigParams: Parameters passed to buildConfig
  */
 def call(Map args) {
