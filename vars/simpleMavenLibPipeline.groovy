@@ -63,7 +63,7 @@ def call(Map args) {
 private Boolean changedSinceLatestTag() {
   String currentCommit = headCommitHash()
   String latestTag = previousTagLabel()
-  String commitOfLatestTag = underlyingCommit(latestTag)
+  String commitOfLatestTag = latestTag != null ? underlyingCommit(latestTag) : null
   echo "Current commit: ${currentCommit}"
   echo "Latest tag: ${latestTag}"
   echo "Latest tag underlying commit: ${commitOfLatestTag}"
@@ -87,14 +87,19 @@ private String underlyingCommit(String tagLabel) {
 }
 
 /**
- * @return Tag label for latest pushed tag in current branch.
+ * @return Tag label for latest pushed tag in current branch. Null if no tag found.
  */
 private String previousTagLabel() {
   sh "git fetch --tags"
-  sh(
-    script: "git describe --abbrev=0",
-    returnStdout: true
-  ).trim()
+  try {
+    sh(
+      script: "git describe --abbrev=0",
+      returnStdout: true
+    ).trim()
+  } catch (e) {
+    println "No previous tag label found - assuming initial case"
+    null
+  }
 }
 
 /**
