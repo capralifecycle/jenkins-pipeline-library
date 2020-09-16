@@ -28,32 +28,39 @@
  *         ..
  *     </properties>
  *    </project>
+ *
+ * Parameters:
+ *
+ *  - dockerBuildImage (required): The Docker image to use as build container
+ *  - buildConfigParams: Parameters passed to buildConfig
  */
 def call(Map args) {
   String dockerBuildImage = args["dockerBuildImage"]
     ?: { throw new RuntimeException("Missing arg: dockerBuildImage") }()
 
-  dockerNode([label: args["dockerNodeLabel"]]) {
-    def buildImage = docker.image(dockerBuildImage)
-    buildImage.pull() // Ensure latest version
+  buildConfig(args.buildConfigParams ?: [:]) {
+    dockerNode([label: args.dockerNodeLabel]) {
+      def buildImage = docker.image(dockerBuildImage)
+      buildImage.pull() // Ensure latest version
 
-    buildImage.inside {
-      stage('Checkout source') {
-        checkout scm
-      }
+      buildImage.inside {
+        stage('Checkout source') {
+          checkout scm
+        }
 
-      stage('Build and conditionally release') {
-        withMavenDeployVersionByTimeEnv { String revision ->
-          String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
-            ? "source:jar deploy scm:tag"
-            : "verify"
+        stage('Build and conditionally release') {
+          withMavenDeployVersionByTimeEnv { String revision ->
+            String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
+              ? "source:jar deploy scm:tag"
+              : "verify"
 
-          withGitTokenCredentials {
-            withGitConfig {
-              sh """
-                mvn -s \$MAVEN_SETTINGS -B org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps
-                mvn -s \$MAVEN_SETTINGS -B -Dtag=$revision -Drevision=$revision $goal
-              """
+            withGitTokenCredentials {
+              withGitConfig {
+                sh """
+                  mvn -s \$MAVEN_SETTINGS -B org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps
+                  mvn -s \$MAVEN_SETTINGS -B -Dtag=$revision -Drevision=$revision $goal
+                """
+              }
             }
           }
         }
