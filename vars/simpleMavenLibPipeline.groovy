@@ -4,30 +4,8 @@
  * Pipeline that creates release when master branch has changes since latest tag.
  * For other branches the build is only verified.
  *
- * Release is not tagged with semantic versioning, but rather continuous versioning by major version plus
- * date and time and is referred to as "revision".
- * See "Løpende"-category here for more information: https://confluence.capraconsulting.no/x/6ZcBC.
- *
- * Requirements in pom.xml:
- *
- *    <project>
- *
- *     <version>${revision}</version>
- *
- *     <scm>
- *         <developerConnection>scm:git:https://github.com/<PATH_TO_REPO>.git</developerConnection>
- *         <connection>scm:git:https://github.com/<PATH_TO_REPO>.git</connection>
- *         <url>https://github.com/<PATH_TO_REPO></url>
- *         <tag>HEAD</tag>
- *     </scm>
- *
- *     <properties>
- *         <!-- Increment major version for breaking changes -->
- *         <major-version>1</major-version>
- *         <revision>${major-version}.local-SNAPSHOT</revision>
- *         ..
- *     </properties>
- *    </project>
+ * To set up a project to use this see
+ * https://confluence.capraconsulting.no/x/fckBC
  *
  * Parameters:
  *
