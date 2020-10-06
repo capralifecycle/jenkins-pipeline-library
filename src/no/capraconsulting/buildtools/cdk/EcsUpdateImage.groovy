@@ -91,11 +91,37 @@ def deploy(Closure cl) {
               "tag": "${config.tag}"
             }'
             echo "Sending payload: \$payload"
-            aws lambda invoke result \\
-              --region $region \\
-              --function-name ${config.deployFunctionArn} \\
-              --payload "\$payload" \\
-              >out
+
+            # Retry-support due to https://jira.capraconsulting.no/browse/CALS-340
+            attempts=0
+            while true; do
+              success=1
+              aws lambda invoke result \\
+                --region $region \\
+                --function-name ${config.deployFunctionArn} \\
+                --payload "\$payload" \\
+                >out \\
+                2>out-err || {
+                  success=0
+                }
+
+              cat out-err
+              if [ \$success -eq 1 ]; then
+                break
+              fi
+
+              if ! grep -q AccessDeniedException out-err; then
+                exit 1
+              fi
+
+              if [ \$attempts -ge 2 ]; then
+                echo "Too many attempts"
+                exit 1
+              fi
+
+              echo "Retrying"
+              attempts=\$((attempts+1))
+            done
 
             if ! jq -e ".FunctionError == null" out >/dev/null; then
               echo "Lambda outfile":
