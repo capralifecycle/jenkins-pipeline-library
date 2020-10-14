@@ -122,6 +122,9 @@ def deploy(Closure cl) {
               echo "Retrying"
               attempts=\$((attempts+1))
               sleep 5
+
+              # Debugging.
+              aws sts get-caller-identity
             done
 
             if ! jq -e ".FunctionError == null" out >/dev/null; then
