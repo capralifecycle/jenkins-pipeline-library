@@ -34,16 +34,19 @@ def call(Map parameters = [:], body) {
 
   // Make colors look good in Jenkins Console view
   ansiColor('xterm') {
-    _slackNotifyBuild {
-      // Set CI like what is used in Travis etc. This is used by lots of
-      // tools to put special behaviour when running in CI.
-      if (!parameters.get('skipCiEnv')) {
-        withEnv(['CI=true']) {
+    // Adds timestamps to the build log.
+    timestamps {
+      _slackNotifyBuild {
+        // Set CI like what is used in Travis etc. This is used by lots of
+        // tools to put special behaviour when running in CI.
+        if (!parameters.get('skipCiEnv')) {
+          withEnv(['CI=true']) {
+            body()
+          }
+        } else {
+          echo "DEPRECATED: Skipping CI=true due to skipCiEnv being set."
           body()
         }
-      } else {
-        echo "DEPRECATED: Skipping CI=true due to skipCiEnv being set."
-        body()
       }
     }
   }
