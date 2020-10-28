@@ -72,7 +72,10 @@ def _slackNotifyBuild(body) {
     }
     body()
   } catch (e) {
-    currentBuild.result = 'FAILURE'
+    // Don't set failure if build is cancelled, e.g. due to milestones.
+    if (currentBuild.result != 'NOT_BUILT') {
+      currentBuild.result = 'FAILURE'
+    }
     throw e
   } finally {
     if (notifyAll || (env.BRANCH_NAME == defaultBranch && currentBuild.result == 'FAILURE')) {
