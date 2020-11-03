@@ -29,11 +29,11 @@ def call(Map args) {
 
         stage('Build and conditionally release') {
           withMavenDeployVersionByTimeEnv { String revision ->
-            String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
-              ? "source:jar deploy scm:tag"
-              : "verify"
-
             withGitTokenCredentials {
+              String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
+                ? "source:jar deploy scm:tag"
+                : "verify"
+
               withGitConfig {
                 sh """
                   mvn -s \$MAVEN_SETTINGS -B org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps
