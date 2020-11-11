@@ -59,7 +59,7 @@ def call(Map args) {
       if (env.BRANCH_NAME == "master") {
         stage("Upload build") {
           withAwsRole(artifactRoleArn) {
-            sh "aws cp build.zip s3://$artifactBucketName/$artifactBucketKey"
+            sh "aws s3 cp build.zip s3://$artifactBucketName/$artifactBucketKey"
           }
         }
       }
