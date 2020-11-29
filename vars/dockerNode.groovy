@@ -6,8 +6,6 @@ def call(Map args = [:], body) {
     : args.label
 
   node(label) {
-    debugRunningStuff()
-
     // We wipe the directory both before and after using the node. The reason
     // for wiping is to enforce consistency between builds and because we
     // might build on different slaves randomly. It also avoids filling up
@@ -22,24 +20,5 @@ def call(Map args = [:], body) {
     body()
 
     deleteDir()
-
-    debugRunningStuff()
   }
-}
-
-/**
- * Give us some insight into what is currently happening on the slave,
- * helping us solve https://jira.capraconsulting.no/browse/CALS-318
- */
-def debugRunningStuff() {
-  echo "--- BEGIN dockerNode DEBUG ---"
-
-  sh 'docker ps'
-
-  // This will only show what runs in the slave container, not the
-  // wrapper image. So processes running in other docker containers
-  // will not be shown.
-  sh 'ps aux'
-
-  echo "--- END dockerNode DEBUG ---"
 }
