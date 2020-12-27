@@ -1,0 +1,153 @@
+#!/usr/bin/groovy
+package no.capraconsulting.buildtools.lifligcdkpipelines
+
+// This is companion to https://github.com/capralifecycle/liflig-cdk/tree/master/src/pipelines
+
+// This is not to be confused with "CDK Pipelines" provided by the AWS CDK library,
+// but covers Liflig's implementation of pipelines for CDK.
+
+/**
+ * Run cdk synth to produce a Cloud Assembly and upload this to S3.
+ *
+ * Returns a pair of the S3 bucket name and bucket key for the uploaded
+ * Cloud Assembly zip file.
+ */
+def createAndUploadCloudAssembly(Map config) {
+  def bucketName = require(config, "bucketName")
+  def roleArn = require(config, "roleArn")
+
+  sh """
+    rm -rf cdk.out
+    npm run cdk -- synth >/dev/null
+    cd cdk.out
+    zip -r ../cloud-assembly.zip .
+  """
+
+  def sha256 = sh([
+    returnStdout: true,
+    script: "sha256sum cloud-assembly.zip | awk '{print \$1}'"
+  ]).trim()
+
+  def s3Key = "cloud-assembly/${sha256}.zip"
+  def s3Url = "s3://$bucketName/$s3Key"
+
+  withAwsRole(roleArn) {
+    sh "aws s3 cp cloud-assembly.zip $s3Url"
+  }
+
+  return s3Key
+}
+
+/**
+ * Configure Liflig CDK pipelines using the uploaded CloudAssembly
+ * and a list of environments and stacks the pipeline should cover.
+ * Then trigger the pipeline.
+ *
+ * The list of pipelines should be structured as:
+ *
+ *   [
+ *     "name-of-pipeline": [
+ *       "environments": [
+ *         "name-of-environment": [
+ *           "list",
+ *           "of",
+ *           "cdk",
+ *           "stacks",
+ *         ],
+ *       ],
+ *       "parameters": [    // optional
+ *         "stack-1:ParameterName": "VariableName",
+ *       ],
+ *     ],
+ *   ]
+ */
+def configureAndTriggerPipelines(Map config) {
+  def cloudAssemblyBucketKey = require(config, "cloudAssemblyBucketKey")
+  def artifactsBucketName = require(config, "artifactsBucketName")
+  def artifactsRoleArn = require(config, "artifactsRoleArn")
+  def pipelines = require(config, "pipelines")
+
+  withAwsRole(artifactsRoleArn) {
+    for (def pipelineName : pipelines.keySet()) {
+      configureCloudAssembly(
+        cloudAssemblyBucketKey: cloudAssemblyBucketKey,
+        artifactsBucketName: artifactsBucketName,
+        pipelineName: pipelineName,
+        parameters: pipelines[pipelineName]["parameters"] ?: [:],
+        environments: pipelines[pipelineName]["environments"],
+      )
+
+      triggerPipeline(
+        artifactsBucketName: artifactsBucketName,
+        pipelineName: pipelineName,
+      )
+    }
+  }
+}
+
+def configureCloudAssembly(Map config) {
+  def cloudAssemblyBucketKey = require(config, "cloudAssemblyBucketKey")
+  def artifactsBucketName = require(config, "artifactsBucketName")
+  def pipelineName = require(config, "pipelineName")
+  def cdkParameters = require(config, "parameters")
+  def environments = require(config, "environments")
+
+  def json = groovy.json.JsonOutput.toJson([
+    cloudAssemblyBucketName: artifactsBucketName,
+    cloudAssemblyBucketKey: cloudAssemblyBucketKey,
+    environments: environments.collect { key, value ->
+      [name: key, stackNames: value]
+    },
+    parameters: cdkParameters.collect { key, value ->
+      [
+        name: key,
+        value: [
+          type: "variable",
+          variable: value,
+        ],
+      ]
+    },
+  ])
+
+  writeFile(file: "cloud-assembly.json", text: json)
+  sh "aws s3 cp cloud-assembly.json s3://$artifactsBucketName/pipelines/$pipelineName/cloud-assembly.json"
+}
+
+def configureVariablesAndTrigger(Map config) {
+  def artifactsRoleArn = require(config, "artifactsRoleArn")
+
+  withAwsRole(artifactsRoleArn) {
+    configureVariables(config)
+    triggerPipeline(config)
+  }
+}
+
+def configureVariables(Map config) {
+  def artifactsBucketName = require(config, "artifactsBucketName")
+  def pipelineName = require(config, "pipelineName")
+  def variables = require(config, "variables")
+
+  def json = groovy.json.JsonOutput.toJson(variables)
+
+  writeFile(file: "variables.json", text: json)
+  sh "aws s3 cp variables.json s3://$artifactsBucketName/pipelines/$pipelineName/variables.json"
+}
+
+def triggerPipeline(Map config) {
+  def artifactsBucketName = require(config, "artifactsBucketName")
+  def pipelineName = require(config, "pipelineName")
+
+  // Upload a blank file to trigger the event.
+  sh """
+    rm -f /tmp/trigger
+    echo >/tmp/trigger
+    aws s3 cp /tmp/trigger "s3://$artifactsBucketName/pipelines/$pipelineName/trigger"
+  """
+}
+
+private def require(Map config, String name) {
+  if (!config.containsKey(name)) {
+    throw new Exception("Missing $name")
+  }
+  return config[name]
+}
