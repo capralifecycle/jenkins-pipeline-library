@@ -196,11 +196,14 @@ def configureVariables(Map config) {
   def artifactsBucketName = require(config, "artifactsBucketName")
   def pipelineName = require(config, "pipelineName")
   def variables = require(config, "variables")
+  def variablesNamespace = config["variablesNamespace"] // optional
 
   def json = groovy.json.JsonOutput.toJson(variables)
 
+  def fileName = variablesNamespace ? "variables-${variablesNamespace}.json" : "variables.json"
+
   writeFile(file: "variables.json", text: json)
-  sh "aws s3 cp variables.json s3://$artifactsBucketName/pipelines/$pipelineName/variables.json"
+  sh "aws s3 cp variables.json s3://$artifactsBucketName/pipelines/$pipelineName/$fileName"
 }
 
 def triggerPipeline(Map config) {
