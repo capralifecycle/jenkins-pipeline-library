@@ -7,10 +7,40 @@ package no.capraconsulting.buildtools.lifligcdkpipelines
 // but covers Liflig's implementation of pipelines for CDK.
 
 /**
+ * Package the source files representing the CDK application
+ * and upload it to S3.
+ *
+ * Returns the bucket key for the uploaded Cloud Assembly zip file.
+ */
+def packageAndUploadCdkSource(Map config) {
+  def bucketName = require(config, "bucketName")
+  def roleArn = require(config, "roleArn")
+  def include = require(config, "include")
+
+  sh """
+    rm -f cdk-source.zip
+    zip -r cdk-source.zip $include"
+  """
+
+  def sha256 = sh([
+    returnStdout: true,
+    script: "sha256sum cdk-source.zip | awk '{print \$1}'"
+  ]).trim()
+
+  def s3Key = "cdk-source/${sha256}.zip"
+  def s3Url = "s3://$bucketName/$s3Key"
+
+  withAwsRole(roleArn) {
+    sh "aws s3 cp cdk-source.zip $s3Url"
+  }
+
+  return s3Key
+}
+
+/**
  * Run cdk synth to produce a Cloud Assembly and upload this to S3.
  *
- * Returns a pair of the S3 bucket name and bucket key for the uploaded
- * Cloud Assembly zip file.
+ * Returns the bucket key for the uploaded Cloud Assembly zip file.
  */
 def createAndUploadCloudAssembly(Map config) {
   def bucketName = require(config, "bucketName")
@@ -36,6 +66,32 @@ def createAndUploadCloudAssembly(Map config) {
   }
 
   return s3Key
+}
+
+/**
+ * Configure Liflig CDK pipelines using a uploaded CDK source.
+ * Then trigger the pipeline.
+ */
+def configureAndTriggerCdkSourcePipelines(Map config) {
+  def cdkSourceBucketKey = require(config, "cdkSourceBucketKey")
+  def artifactsBucketName = require(config, "artifactsBucketName")
+  def artifactsRoleArn = require(config, "artifactsRoleArn")
+  def pipelines = require(config, "pipelines")
+
+  withAwsRole(artifactsRoleArn) {
+    for (def pipelineName : pipelines) {
+      configureCdkSource(
+        cdkSourceBucketKey: cdkSourceBucketKey,
+        artifactsBucketName: artifactsBucketName,
+        pipelineName: pipelineName,
+      )
+
+      triggerPipeline(
+        artifactsBucketName: artifactsBucketName,
+        pipelineName: pipelineName,
+      )
+    }
+  }
 }
 
 /**
@@ -83,6 +139,20 @@ def configureAndTriggerPipelines(Map config) {
       )
     }
   }
+}
+
+def configureCdkSource(Map config) {
+  def cdkSourceBucketKey = require(config, "cdkSourceBucketKey")
+  def artifactsBucketName = require(config, "artifactsBucketName")
+  def pipelineName = require(config, "pipelineName")
+
+  def json = groovy.json.JsonOutput.toJson([
+    bucketName: artifactsBucketName,
+    bucketKey: cdkSourceBucketKey,
+  ])
+
+  writeFile(file: "cdk-source.json", text: json)
+  sh "aws s3 cp cdk-source.json s3://$artifactsBucketName/pipelines/$pipelineName/cdk-source.json"
 }
 
 def configureCloudAssembly(Map config) {
