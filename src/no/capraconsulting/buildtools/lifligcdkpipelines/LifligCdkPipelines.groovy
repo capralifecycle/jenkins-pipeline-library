@@ -99,6 +99,8 @@ def configureAndTriggerCdkSourcePipelines(Map config) {
  * and a list of environments and stacks the pipeline should cover.
  * Then trigger the pipeline.
  *
+ * This is to be used with the legacy pipeline using Step Functions.
+ *
  * The list of pipelines should be structured as:
  *
  *   [
@@ -131,6 +133,39 @@ def configureAndTriggerPipelines(Map config) {
         pipelineName: pipelineName,
         parameters: pipelines[pipelineName]["parameters"] ?: [:],
         environments: pipelines[pipelineName]["environments"],
+      )
+
+      triggerPipeline(
+        artifactsBucketName: artifactsBucketName,
+        pipelineName: pipelineName,
+      )
+    }
+  }
+}
+
+/**
+ * Configure Liflig CDK pipelines using the uploaded CloudAssembly.
+ * Then trigger the pipeline.
+ *
+ * This is to be used with the setup based on CDK Pipelines.
+ *
+ * The list of pipelines is a string list of pipeline names.
+ */
+def configureAndTriggerPipelinesV2(Map config) {
+  def cloudAssemblyBucketKey = require(config, "cloudAssemblyBucketKey")
+  def artifactsBucketName = require(config, "artifactsBucketName")
+  def artifactsRoleArn = require(config, "artifactsRoleArn")
+  def pipelines = require(config, "pipelines")
+
+  withAwsRole(artifactsRoleArn) {
+    // See https://stackoverflow.com/a/47027926 for loop.
+    for (int i = 0; i < pipelines.size(); i++) {
+      def pipelineName = pipelines[i]
+
+      configureCloudAssemblyV2(
+        cloudAssemblyBucketKey: cloudAssemblyBucketKey,
+        artifactsBucketName: artifactsBucketName,
+        pipelineName: pipelineName,
       )
 
       triggerPipeline(
@@ -177,6 +212,20 @@ def configureCloudAssembly(Map config) {
         ],
       ]
     },
+  ])
+
+  writeFile(file: "cloud-assembly.json", text: json)
+  sh "aws s3 cp cloud-assembly.json s3://$artifactsBucketName/pipelines/$pipelineName/cloud-assembly.json"
+}
+
+def configureCloudAssemblyV2(Map config) {
+  def cloudAssemblyBucketKey = require(config, "cloudAssemblyBucketKey")
+  def artifactsBucketName = require(config, "artifactsBucketName")
+  def pipelineName = require(config, "pipelineName")
+
+  def json = groovy.json.JsonOutput.toJson([
+    cloudAssemblyBucketName: artifactsBucketName,
+    cloudAssemblyBucketKey: cloudAssemblyBucketKey,
   ])
 
   writeFile(file: "cloud-assembly.json", text: json)
