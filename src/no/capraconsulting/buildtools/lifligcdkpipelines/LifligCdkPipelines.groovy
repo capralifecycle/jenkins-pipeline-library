@@ -19,7 +19,7 @@ def packageAndUploadCdkSource(Map config) {
 
   sh """
     rm -f cdk-source.zip
-    zip -r cdk-source.zip $include"
+    zip -r cdk-source.zip $include
   """
 
   def sha256 = sh([
