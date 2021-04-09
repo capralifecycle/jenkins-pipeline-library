@@ -206,10 +206,6 @@ class CreateBuildDelegate implements Serializable {
   /** The goal targeted. */
   String mavenGoals = 'verify'
   /**
-   * Set mvn properties tag and revision to LongTag.
-   */
-  Boolean setRevisionAsLongTag = false
-  /**
    * Verify no snapshots used as dependencies using maven-enforcer-plugin
    * before normal build.
    */
