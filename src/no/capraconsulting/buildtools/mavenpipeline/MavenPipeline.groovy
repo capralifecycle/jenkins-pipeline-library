@@ -89,6 +89,10 @@ def createBuild(Closure cl) {
         try {
           withMavenSettings {
             stage('Build and verify') {
+              if (buildConfig.requireReleaseDeps) {
+                sh "mvn -s \$MAVEN_SETTINGS -B org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps"
+              }
+
               sh "mvn -s \$MAVEN_SETTINGS -B --update-snapshots ${buildConfig.mavenArgs} ${buildConfig.mavenGoals}"
             }
           }
@@ -190,6 +194,11 @@ class CreateBuildDelegate implements Serializable {
   String mavenArgs = ''
   /** The goal targeted. */
   String mavenGoals = 'verify'
+  /**
+   * Verify no snapshots used as dependencies using maven-enforcer-plugin
+   * before normal build.
+   */
+  Boolean requireReleaseDeps = false
   /**
    * Docker build process. Most of our services we build with Maven
    * builds a Docker image that will be run in an environment.
