@@ -1,6 +1,10 @@
 #!/usr/bin/groovy
 package no.capraconsulting.buildtools.mavenpipeline
 
+import no.capraconsulting.buildtools.Utils
+
+def utils = new Utils()
+
 def pipeline(Closure cl) {
   def config = new ConfigDelegate()
   cl.resolveStrategy = Closure.DELEGATE_FIRST
@@ -86,6 +90,8 @@ def createBuild(Closure cl) {
           checkout scm
         }
 
+        def revisionMavenArg = setRevisionAsLongTag ? revisionArgs() : ""
+
         try {
           withMavenSettings {
             stage('Build and verify') {
@@ -93,7 +99,7 @@ def createBuild(Closure cl) {
                 sh "mvn -s \$MAVEN_SETTINGS -B org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps"
               }
 
-              sh "mvn -s \$MAVEN_SETTINGS -B --update-snapshots ${buildConfig.mavenArgs} ${buildConfig.mavenGoals}"
+              sh "mvn -s \$MAVEN_SETTINGS -B --update-snapshots ${buildConfig.mavenArgs} ${revisionMavenArg} ${buildConfig.mavenGoals}"
             }
           }
         } finally {
@@ -109,6 +115,11 @@ def createBuild(Closure cl) {
   }
 
   return build
+}
+
+private GString revisionArgs() {
+  def revision = utils.generateLongTag(new Date())
+  "-Dtag=$revision -Drevision=$revision"
 }
 
 def createDockerBuild(Closure cl = null) {
@@ -194,6 +205,10 @@ class CreateBuildDelegate implements Serializable {
   String mavenArgs = ''
   /** The goal targeted. */
   String mavenGoals = 'verify'
+  /**
+   * Set revision arguments in maven.
+   */
+  Boolean setRevisionAsLongTag = false
   /**
    * Verify no snapshots used as dependencies using maven-enforcer-plugin
    * before normal build.
