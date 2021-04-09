@@ -117,7 +117,7 @@ def createBuild(Closure cl) {
   return build
 }
 
-private GString revisionArgs() {
+private def revisionArgs() {
   def revision = utils.generateLongTag(new Date())
   "-Dtag=$revision -Drevision=$revision"
 }
@@ -206,7 +206,7 @@ class CreateBuildDelegate implements Serializable {
   /** The goal targeted. */
   String mavenGoals = 'verify'
   /**
-   * Set revision arguments in maven.
+   * Set mvn properties tag and revision to LongTag.
    */
   Boolean setRevisionAsLongTag = false
   /**
