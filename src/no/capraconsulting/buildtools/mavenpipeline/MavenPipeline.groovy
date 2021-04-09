@@ -3,8 +3,6 @@ package no.capraconsulting.buildtools.mavenpipeline
 
 import no.capraconsulting.buildtools.Utils
 
-def utils = new Utils()
-
 def pipeline(Closure cl) {
   def config = new ConfigDelegate()
   cl.resolveStrategy = Closure.DELEGATE_FIRST
@@ -118,6 +116,7 @@ def createBuild(Closure cl) {
 }
 
 private def revisionArgs() {
+  def utils = new Utils()
   def revision = utils.generateLongTag(new Date())
   "-Dtag=$revision -Drevision=$revision"
 }
