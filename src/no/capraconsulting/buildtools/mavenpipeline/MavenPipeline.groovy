@@ -90,7 +90,7 @@ def createBuild(Closure cl) {
           checkout scm
         }
 
-        def revisionMavenArg = setRevisionAsLongTag ? revisionArgs() : ""
+        def revisionMavenArg = buildConfig.setRevisionAsLongTag ? revisionArgs() : ""
 
         try {
           withMavenSettings {
