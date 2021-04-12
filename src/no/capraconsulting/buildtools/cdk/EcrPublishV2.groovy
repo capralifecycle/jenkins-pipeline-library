@@ -207,7 +207,7 @@ def buildImage(Map args = [:]) {
   }
   img = docker.build(
     "${args.config.repositoryUri}:${args.applicationName}",
-    "--cache-from $lastImageId$dockerArgs --pull $contextDir"
+    "--cache-from $lastImageId$dockerArgs $contextDir"
   )
 
   def isSameImageAsLast = pushCache(args.applicationName, img, lastImageId)
