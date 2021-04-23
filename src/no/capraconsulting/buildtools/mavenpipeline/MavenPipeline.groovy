@@ -109,6 +109,10 @@ def createBuild(Closure cl) {
       if (buildConfig.dockerBuild) {
         buildConfig.dockerBuild.call()
       }
+
+      if (buildConfig.postBuildAction) {
+        buildConfig.postBuildAction.call()
+      }
     }
   }
 
@@ -219,6 +223,10 @@ class CreateBuildDelegate implements Serializable {
    * Optional.
    */
   Closure dockerBuild
+  /**
+   * Function called after docker build is finished. Can be used to e.g. archive artifacts in Jenkins.
+   */
+  Closure postBuildAction
 }
 
 class CreateDockerBuildDelegate implements Serializable {
