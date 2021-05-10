@@ -66,21 +66,14 @@ def _slackNotifyBuild(body) {
   def notifyAll = params.notifyAll ?: false
   def defaultBranch = params.defaultBranch ?: "master"
 
-  try {
+  catchError {
     if (notifyAll) {
       slackNotifyBuild([ buildStatus: 'STARTED' ])
     }
     body()
-  } catch (e) {
-    // Don't set failure if build is cancelled, e.g. due to milestones.
-    if (currentBuild.result != 'NOT_BUILT') {
-      currentBuild.result = 'FAILURE'
-    }
-    throw e
-  } finally {
-    if (notifyAll || (env.BRANCH_NAME == defaultBranch && currentBuild.result == 'FAILURE')) {
-      slackNotifyBuild([ buildStatus: currentBuild.result ])
-    }
+  }
+
+  if (notifyAll || (env.BRANCH_NAME == defaultBranch && currentBuild.result == 'FAILURE')) {
+    slackNotifyBuild([ buildStatus: currentBuild.result ])
   }
 }
-
