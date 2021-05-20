@@ -242,17 +242,47 @@ def configureVariablesAndTrigger(Map config) {
 }
 
 def configureVariables(Map config) {
-  def artifactsBucketName = require(config, "artifactsBucketName")
-  def pipelineName = require(config, "pipelineName")
+  // Currently supports both old and new model. Old model uses S3
+  // with local scoped names and new model uses Parameter Store with
+  // global scoped names.
+  // See https://jira.capraconsulting.no/browse/CALS-416 for details.
+
+  // Supported: v1 (default), v2, v1+v2
+  // Later v2 will become default.
+  def version = config["variablesVersion"] ?: "v1"
+  if (version != "v1" && version != "v2" && version != "v1+v2") {
+    throw new Exception("Unknown version: $version")
+  }
+
   def variables = require(config, "variables")
+
+  // For old model.
+  def artifactsBucketName = config["artifactsBucketName"]
+  def pipelineName = config["pipelineName"]
   def variablesNamespace = config["variablesNamespace"] // optional
 
-  def json = groovy.json.JsonOutput.toJson(variables)
+  // For new model.
+  def region = config["region"]
+  def parametersNamespace = config["parametersNamespace"] ?: "default"
 
-  def fileName = variablesNamespace ? "variables-${variablesNamespace}.json" : "variables.json"
+  if (version == "v1" || version == "v1+v2") {
+    def json = groovy.json.JsonOutput.toJson(variables)
 
-  writeFile(file: "variables.json", text: json)
-  sh "aws s3 cp variables.json s3://$artifactsBucketName/pipelines/$pipelineName/$fileName"
+    def fileName = variablesNamespace ? "variables-${variablesNamespace}.json" : "variables.json"
+
+    writeFile(file: "variables.json", text: json)
+    sh "aws s3 cp variables.json s3://$artifactsBucketName/pipelines/$pipelineName/$fileName"
+  }
+
+  if (version == "v2" || version == "v1+v2") {
+    for (def variableName : variables.keySet()) {
+      // The variable name and value is not sanitized since we do not
+      // expect any special values here and its values come from the
+      // trusted Jenkinsfile anyways.
+      def value = variables[variableName]
+      sh "aws ssm put-parameter --region '$region' --name '/liflig-cdk/$parametersNamespace/pipeline-variables/$variableName' --value '$value' --type String --overwrite"
+    }
+  }
 }
 
 def triggerPipeline(Map config) {
