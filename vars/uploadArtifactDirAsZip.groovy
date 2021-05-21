@@ -26,7 +26,7 @@ def call(Map config) {
     script: "sha256sum /tmp/artifact.zip | awk '{print \$1}'"
   ]).trim()
 
-  def s3Key = "${sha256}.zip"
+  def s3Key = "builds/${sha256}.zip"
   def s3Url = "s3://$artifactsBucketName/$s3Key"
 
   withAwsRole(artifactsRoleArn) {
