@@ -17,8 +17,10 @@ def call(Map args = [:], body) {
     // to use ECR for pulling and pushing our own Docker images.
     sh '(set +x; eval $(aws ecr get-login --no-include-email --region eu-central-1))'
 
-    body()
-
-    deleteDir()
+    try {
+      body()
+    } finally {
+      deleteDir()
+    }
   }
 }
