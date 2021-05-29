@@ -9,19 +9,15 @@
  *
  * Setup instructions:
  *   1) Create project in sonarcloud.io
- *   2) Install jest reporter:
- *      npm install --save-dev --exact jest-sonar-reporter
- *   3) Add to .gitignore:
+ *   2) Add to .gitignore:
  *      /coverage/
  *      /test-report.xml
- *   4) Modify package.json and ensure jest is called with `--coverage`
+ *   3) Modify package.json and ensure jest is called with `--coverage`
  *      E.g. "jest --coverage src"
- *   5) Add to jest config:
- *      { testResultsProcessor: 'jest-sonar-reporter' }
- *   6) Ensure the image being used in the build includes sonar-scanner
+ *   4) Ensure the image being used in the build includes sonar-scanner
  *      See e.g https://github.com/capralifecycle/buildtools-snippets/tree/master/tools/sonar-scanner
  *      (at least for TypeScript the sonar-scanner needs the node executable)
- *   7) Add to Jenkinsfile (outside a stage)
+ *   5) Add to Jenkinsfile (outside a stage)
  *      analyzeSonarCloudForJs([
  *        // Modify next lines and remove this comment.
  *        'sonar.organization': 'capralifecycle',
