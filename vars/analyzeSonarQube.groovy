@@ -9,7 +9,7 @@
 def call(projectKey, Map params = [:]) {
   stage('Analyze with SonarQube') {
     withSonarQubeEnv {
-      def img = docker.image('923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/tool/sonar-scanner')
+      def img = docker.image(toolImageDockerReference('sonar-scanner'))
       img.pull() // ensure we have latest version
       img.inside {
         sh """

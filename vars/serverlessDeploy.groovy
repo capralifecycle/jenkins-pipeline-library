@@ -4,7 +4,7 @@
  * Deploy a service using Serverless.
  */
 def call(deployIamRole, serverlessArgs) {
-  def img = docker.image('923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/tool/serverless')
+  def img = docker.image(toolImageDockerReference('serverless'))
   img.pull() // ensure we have latest version
 
   withAwsRole(deployIamRole) {

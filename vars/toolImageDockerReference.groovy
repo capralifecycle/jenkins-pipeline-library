@@ -7,5 +7,5 @@
  * The provided name can include a tag, e.g. node:12-alpine
  */
 def call(name) {
-  "923402097046.dkr.ecr.eu-central-1.amazonaws.com/buildtools/tool/$name"
+  "public.ecr.aws/z8l5l4v4/buildtools/tool/$name"
 }
