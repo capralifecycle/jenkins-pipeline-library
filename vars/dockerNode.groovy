@@ -13,6 +13,11 @@ def call(Map args = [:], body) {
     // cleaned.
     deleteDir()
 
+    // Cleanup any previous Docker credentials to avoid expired tokens
+    // for public repos. We do this before and after the body to catch
+    // all scenarios.
+    sh 'rm -f ~/.docker/config.json'
+
     // Implicitly uses role provided to slave container to get authorization
     // to use ECR for pulling and pushing our own Docker images.
     sh '(set +x; eval $(aws ecr get-login --no-include-email --region eu-central-1))'
@@ -21,6 +26,7 @@ def call(Map args = [:], body) {
       body()
     } finally {
       deleteDir()
+      sh 'rm -f ~/.docker/config.json'
     }
   }
 }
