@@ -3,9 +3,15 @@
 def call(builtImg, lastImageId, suffix = null) {
   def cacheTag = dockerGetCacheTag(suffix)
 
+  // Ensure we point to a tag so that we only match one specific image.
+  def imageRef = builtImg.id
+  if (!imageRef.contains(":")) {
+    imageRef += ":latest"
+  }
+
   def newImageId = sh([
     returnStdout: true,
-    script: "docker images -q ${builtImg.id}"
+    script: "docker images -q $imageRef"
   ]).trim()
 
   echo "Pushing Docker branch image for cache of next build using tag $cacheTag"
@@ -19,6 +25,6 @@ def call(builtImg, lastImageId, suffix = null) {
     echo 'History of built image:'
   }
 
-  sh "docker history ${builtImg.id}"
+  sh "docker history $imageRef"
   return newImageId == lastImageId
 }
