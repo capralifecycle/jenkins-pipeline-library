@@ -9,7 +9,7 @@ def call(Map config) {
   def artifactDir = require(config, "artifactDir")
 
   def bucketName = require(config, "artifactsBucketName")
-  def bucketDir = require(config, "bucketDir")
+  def bucketDir = require(config, "artifactsBucketDir")
   def roleArn = require(config, "artifactsRoleArn")
 
   dir(artifactDir) {
