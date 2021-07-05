@@ -11,8 +11,12 @@ def call(Map config) {
   def artifactsRoleArn = require(config, "artifactsRoleArn")
 
   dir(artifactDir) {
-    def artifactFileName = sh """
+    def fileName = sh """
       find . -type f -iname "$artifactPrefix*" -exec basename {} \\;
+    """
+
+    def fileExtension = sh """
+      "\${$fileName##*.}"
     """
 
     // TODO: The file will include timestamps causing new hash to
@@ -22,14 +26,14 @@ def call(Map config) {
 
     def sha256 = sh([
       returnStdout: true,
-      script: "sha256sum ./$artifactFileName | awk '{print \$1}'"
+      script: "sha256sum ./$fileName | awk '{print \$1}'"
     ]).trim()
 
-    def s3Key = "builds/${sha256}.jar" // TODO: Is filetype needed?
+    def s3Key = "builds/${sha256}.$fileExtension"
     def s3Url = "s3://$artifactsBucketName/$s3Key"
 
     withAwsRole(artifactsRoleArn) {
-      sh "aws s3 cp /$artifactDir/$artifactFileName $s3Url"
+      sh "aws s3 cp /$artifactDir/$fileName $s3Url"
     }
 
     s3Key
