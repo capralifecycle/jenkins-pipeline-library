@@ -5,7 +5,7 @@
  * bucket name using the given IAM role.
  */
 def call(Map config) {
-  def artifactFileName = require(config, "artifactPrefix")
+  def artifactFileName = require(config, "artifactFileName")
   def artifactDir = require(config, "artifactDir")
 
   def bucketName = require(config, "artifactsBucketName")
