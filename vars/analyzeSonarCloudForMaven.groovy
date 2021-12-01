@@ -14,7 +14,7 @@
  *      <plugin>
  *        <groupId>org.jacoco</groupId>
  *        <artifactId>jacoco-maven-plugin</artifactId>
- *        <version>0.8.4</version>
+ *        <version>0.8.7</version>
  *        <executions>
  *          <execution>
  *            <id>jacoco-initialize</id>
@@ -24,6 +24,7 @@
  *          </execution>
  *          <execution>
  *            <id>jacoco-site</id>
+ *            <phase>package</phase> <!-- Kjør automatisk ved package. Du kan også kjøre site selv, eller bruke en annen phase som verify -->
  *            <goals>
  *              <goal>report</goal>
  *            </goals>
