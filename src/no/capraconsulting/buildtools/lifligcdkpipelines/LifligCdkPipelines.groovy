@@ -288,12 +288,30 @@ def configureVariables(Map config) {
 def triggerPipeline(Map config) {
   def artifactsBucketName = require(config, "artifactsBucketName")
   def pipelineName = require(config, "pipelineName")
+  def replayClassName = "org.jenkinsci.plugins.workflow.cps.replay.ReplayCause"
+  def isReplay = currentBuild.rawBuild.getCauses().any{ cause -> cause.toString().contains(replayClassName) }
 
-  // Upload a blank file to trigger the event.
+  // The git plugin in Jenkins stores git metadata in environment
+  // variables, but these do not seem to be available when using
+  // `checkout scm` (https://issues.jenkins.io/browse/JENKINS-26100)
+
   sh """
-    rm -f /tmp/trigger
-    echo >/tmp/trigger
-    aws s3 cp /tmp/trigger "s3://$artifactsBucketName/pipelines/$pipelineName/trigger"
+content="\$(cat <<EOF
+{
+  "version": "0.1",
+  "jenkins": {
+    "isReplay": $isReplay
+  },
+  "git": {
+    "timestamp": "\$(git show -s --format="%ct")"
+  }
+}
+EOF
+)"
+printf "Content of trigger file:\n%s\n" "\$content"
+rm -f /tmp/trigger
+echo "\$content" > /tmp/trigger
+aws s3 cp /tmp/trigger "s3://$artifactsBucketName/pipelines/$pipelineName/trigger"
   """
 }
 
