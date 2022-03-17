@@ -300,9 +300,14 @@ content="\$(cat <<EOF
 {
   "version": "0.1",
   "jenkins": {
-    "isReplay": $isReplay
+    "isReplay": $isReplay,
+    "jobName": "$JOB_NAME",
+    "buildId": "$BUILD_ID"
   },
   "git": {
+    "author": "\$(git show -s --format="%an")",
+    "branch": "\$(git rev-parse --abbrev-ref HEAD)",
+    "sha": "\$(git show -s --format="%H")",
     "timestamp": "\$(git show -s --format="%ct")"
   }
 }
