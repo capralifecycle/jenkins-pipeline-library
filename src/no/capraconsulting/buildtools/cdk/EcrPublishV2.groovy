@@ -75,18 +75,8 @@ private def getCacheTags(applicationName) {
   def tag = "ci-cache-$applicationName"
 
   if (env.BRANCH_NAME != null && env.BRANCH_NAME != "master") {
-    // Tags based on branch names may occasionally exceed the allowed limit of 128 characters
-    // The code below truncates the tag if necessary, and appends a short hash to keep the
-    // tag unique for the given application and branch name
-    def branch = utils.getSafeBranchName(env.BRANCH_NAME)
-    def branchTag = tag + "-" + branch
-    def maxTagLength = 128
-    if (branchTag.length() > maxTagLength) {
-      def hash = branchTag.digest("SHA-256").take(7)
-      branchTag = branchTag.take(maxTagLength - (hash.length() + 1)) + "-" + hash
-    }
     return [
-      branchTag,
+      tag + "-" + utils.getSafeBranchName(env.BRANCH_NAME),
       tag
     ]
   }
