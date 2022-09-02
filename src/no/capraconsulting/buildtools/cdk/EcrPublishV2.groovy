@@ -82,7 +82,7 @@ private def getCacheTags(applicationName) {
     def branchTag = tag + "-" + branch
     def maxTagLength = 128
     if (branchTag.length() > maxTagLength) {
-      def hash = branchTag.digest("SHA-256").take(7)
+      def hash = org.apache.commons.codec.digest.DigestUtils.sha256Hex(branchTag).take(7)
       branchTag = branchTag.take(maxTagLength - (hash.length() + 1)) + "-" + hash
     }
     return [
