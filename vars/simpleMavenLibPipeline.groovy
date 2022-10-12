@@ -30,6 +30,19 @@ def call(Map args) {
         stage('Build and conditionally release') {
           withMavenDeployVersionByTimeEnv { String revision ->
             withGitTokenCredentials {
+              // When releasing to GitHub Packages, we verify that the project's pom file is properly configured
+              def jobNameParts = env.JOB_NAME.tokenize('/') as String[]
+              String currentRepository = jobNameParts.length < 2 ? env.JOB_NAME : jobNameParts[jobNameParts.length - 2]
+              String targetRepository = sh([
+                returnStdout: true,
+                // Return the name of a GitHub Packages repository configured in the project's
+                // distribution management, if any is defined. If no such URLs are present (e.g., if using other
+                // remote repositories), the variable will be null or an empty string.
+                script: "awk '/<distributionManagement>/,/<\\/distributionManagement>/' pom.xml | sed -n 's/^.*<url>.*maven\\.pkg\\.github\\.com\\/[^/]\\{1,\\}\\/\\(.*\\)<\\/url>/\\1/p' | head -1"
+            ]).trim()
+              if (targetRepository != null && !targetRepository.isEmpty() && targetRepository != currentRepository) {
+                error("Maven is configured to publish to GitHub Packages in repository '${targetRepository}', but the current repository is '${currentRepository}'")
+              }
               String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
                 ? "source:jar deploy scm:tag"
                 : "verify"
