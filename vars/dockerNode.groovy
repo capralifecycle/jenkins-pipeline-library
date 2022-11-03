@@ -22,6 +22,9 @@ def call(Map args = [:], body) {
     // to use ECR for pulling and pushing our own Docker images.
     sh '(set +x; eval $(aws ecr get-login --no-include-email --region eu-central-1))'
 
+    // Authenticate to ECR Public to increase rate limit
+    sh '(set +x; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws)'
+
     withCredentials([
       usernamePassword(
         credentialsId: 'dockerhub-token-with-user',
