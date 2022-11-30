@@ -41,7 +41,7 @@ def call(Map args) {
                 // remote repositories), the variable will be null or an empty string.
                 script: "awk '/<distributionManagement>/,/<\\/distributionManagement>/' pom.xml | sed -n 's/^.*<url>.*maven\\.pkg\\.github\\.com\\/[^/]\\{1,\\}\\/\\(.*\\)<\\/url>/\\1/p' | head -1"
             ]).trim()
-              if (targetRepository != null && !targetRepository.isEmpty() && !currentRepository.contains(targetRepository)) {
+              if (targetRepository != null && !targetRepository.isEmpty() && targetRepository != currentRepository && currentRepository != targetRepository.concat('-pipeline')) {
                 error("Maven is configured to publish to GitHub Packages in repository '${targetRepository}', but the current repository is '${currentRepository}'")
               }
               String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
