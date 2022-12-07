@@ -50,7 +50,6 @@ def call(Map args) {
 
               withGitConfig {
                 sh """
-                  mvn -s \$MAVEN_SETTINGS -B org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps -Drevision=$revision
                   mvn -s \$MAVEN_SETTINGS -B -Dtag=$revision -Drevision=$revision $goal
                 """
               }
