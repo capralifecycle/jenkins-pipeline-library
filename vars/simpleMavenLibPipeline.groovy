@@ -49,7 +49,7 @@ def call(Map args) {
                 : "verify"
 
               withGitConfig {
-                if(args.skipMavenEnforcer !== true){
+                if(args.skipMavenEnforcer != true){
                 sh """
                   mvn -s \$MAVEN_SETTINGS -B org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps
                 """
