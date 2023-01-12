@@ -12,6 +12,7 @@
  *  - dockerBuildImage (required): The Docker image to use as build container
  *  - dockerNodeLabel: Label used for Jenkins slave
  *  - buildConfigParams: Parameters passed to buildConfig
+ *  - useMavenEnforcer: Whether to run maven-enforcer-plugin before deploy or not. Default "true"
  */
 def call(Map args) {
   String dockerBuildImage = args["dockerBuildImage"]
@@ -49,8 +50,14 @@ def call(Map args) {
                 : "verify"
 
               withGitConfig {
+                def useMavenEnforcer = args.useMavenEnforcer == null ?  true : args.useMavenEnforcer
+
+                if(useMavenEnforcer){
                 sh """
                   mvn -s \$MAVEN_SETTINGS -B org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps
+                """
+                }
+                sh """
                   mvn -s \$MAVEN_SETTINGS -B -Dtag=$revision -Drevision=$revision $goal
                 """
               }
