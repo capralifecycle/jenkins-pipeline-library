@@ -50,7 +50,7 @@ def call(Map args) {
                 : "verify"
 
               withGitConfig {
-                def useMavenEnforcer = args.useMavenEnforcer ?: true
+                def useMavenEnforcer = args.useMavenEnforcer == null ?  true : args.useMavenEnforcer
 
                 if(useMavenEnforcer){
                 sh """
