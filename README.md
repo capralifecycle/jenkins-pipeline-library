@@ -1,4 +1,4 @@
-# Jenkins2 pipeline library
+# Jenkins2 pipeline library test
 
 Used to store common code used in Jenkins pipelines.
 
