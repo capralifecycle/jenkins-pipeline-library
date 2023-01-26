@@ -1,6 +1,23 @@
 #!/usr/bin/groovy
 
 /**
+ * A quickfix for allowing simpleMavenLibPipeline to be used as a stage
+ * inside existing pipelines. Without this, a Jenkinsfile using simpleMavenLibPipeline
+ * as a stage inside an existing pipeline (as opposed to using it as a standalone pipeline)
+ * will occupy two Jenkins slaves, which can easily result in resource exhaustion and deadlocks.
+*/
+def conditionalDockerNode(String dockerNodeLabel, Closure body) {
+  if (env.NODE_NAME) {
+    echo 'Executing the Maven library pipeline inside the existing Docker node'
+    body()
+  } else {
+    dockerNode([label: dockerNodeLabel]) {
+      body()
+    }
+  }
+}
+
+/**
  * Pipeline that creates release when master branch has changes since latest tag.
  * For other branches the build is only verified.
  *
@@ -19,7 +36,7 @@ def call(Map args) {
     ?: { throw new RuntimeException("Missing arg: dockerBuildImage") }()
 
   buildConfig(args.buildConfigParams ?: [:]) {
-    dockerNode([label: args.dockerNodeLabel]) {
+    conditionalDockerNode(args.dockerNodeLabel) {
       def buildImage = docker.image(dockerBuildImage)
       buildImage.pull() // Ensure latest version
 
