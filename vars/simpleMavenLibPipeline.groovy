@@ -1,6 +1,23 @@
 #!/usr/bin/groovy
 
 /**
+ * A quickfix for allowing simpleMavenLibPipeline to be used as a stage
+ * inside existing pipelines. Without this, a Jenkinsfile using simpleMavenLibPipeline
+ * as a stage inside an existing pipeline (as opposed to using it as a standalone pipeline)
+ * will occupy two Jenkins slaves, which can easily result in resource exhaustion and deadlocks.
+*/
+def conditionalDockerNode(String dockerNodeLabel, Closure body) {
+  if (env.NODE_NAME) {
+    echo 'Executing the Maven library pipeline inside the existing Docker node'
+    body()
+  } else {
+    dockerNode([label: dockerNodeLabel]) {
+      body()
+    }
+  }
+}
+
+/**
  * Pipeline that creates release when master branch has changes since latest tag.
  * For other branches the build is only verified.
  *
@@ -12,13 +29,14 @@
  *  - dockerBuildImage (required): The Docker image to use as build container
  *  - dockerNodeLabel: Label used for Jenkins slave
  *  - buildConfigParams: Parameters passed to buildConfig
+ *  - useMavenEnforcer: Whether to run maven-enforcer-plugin before deploy or not. Default "true"
  */
 def call(Map args) {
   String dockerBuildImage = args["dockerBuildImage"]
     ?: { throw new RuntimeException("Missing arg: dockerBuildImage") }()
 
   buildConfig(args.buildConfigParams ?: [:]) {
-    dockerNode([label: args.dockerNodeLabel]) {
+    conditionalDockerNode(args.dockerNodeLabel) {
       def buildImage = docker.image(dockerBuildImage)
       buildImage.pull() // Ensure latest version
 
@@ -30,13 +48,33 @@ def call(Map args) {
         stage('Build and conditionally release') {
           withMavenDeployVersionByTimeEnv { String revision ->
             withGitTokenCredentials {
+              // When releasing to
+              // GitHub Packages, we verify that the project's pom file is properly configured
+              def jobNameParts = env.JOB_NAME.tokenize('/') as String[]
+              String currentRepository = jobNameParts.length < 2 ? env.JOB_NAME : jobNameParts[jobNameParts.length - 2]
+              String targetRepository = sh([
+                returnStdout: true,
+                // Return the name of a GitHub Packages repository configured in the project's
+                // distribution management, if any is defined. If no such URLs are present (e.g., if using other
+                // remote repositories), the variable will be null or an empty string.
+                script: "awk '/<distributionManagement>/,/<\\/distributionManagement>/' pom.xml | sed -n 's/^.*<url>.*maven\\.pkg\\.github\\.com\\/[^/]\\{1,\\}\\/\\(.*\\)<\\/url>/\\1/p' | head -1"
+            ]).trim()
+              if (targetRepository != null && !targetRepository.isEmpty() && targetRepository != currentRepository && currentRepository != targetRepository.concat('-pipeline')) {
+                error("Maven is configured to publish to GitHub Packages in repository '${targetRepository}', but the current repository is '${currentRepository}'")
+              }
               String goal = env.BRANCH_NAME == "master" && changedSinceLatestTag()
                 ? "source:jar deploy scm:tag"
                 : "verify"
 
               withGitConfig {
+                def useMavenEnforcer = args.useMavenEnforcer == null ?  true : args.useMavenEnforcer
+
+                if(useMavenEnforcer){
                 sh """
                   mvn -s \$MAVEN_SETTINGS -B org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps
+                """
+                }
+                sh """
                   mvn -s \$MAVEN_SETTINGS -B -Dtag=$revision -Drevision=$revision $goal
                 """
               }
