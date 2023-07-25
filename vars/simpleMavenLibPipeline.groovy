@@ -68,14 +68,11 @@ def call(Map args) {
 
               withGitConfig {
                 def useMavenEnforcer = args.useMavenEnforcer == null ?  true : args.useMavenEnforcer
+                def enforcer = useMavenEnforcer ? "org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps" : ""
 
-                if(useMavenEnforcer){
+                // Run enforcer alongside verify or deploy to make Reactor resolve module dependencies in multi-module projects.
                 sh """
-                  mvn -s \$MAVEN_SETTINGS -B org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M3:enforce -Drules=requireReleaseDeps
-                """
-                }
-                sh """
-                  mvn -s \$MAVEN_SETTINGS -B -Dtag=$revision -Drevision=$revision $goal
+                  mvn -s \$MAVEN_SETTINGS -B -Dtag=$revision -Drevision=$revision clean $enforcer $goal
                 """
               }
             }
