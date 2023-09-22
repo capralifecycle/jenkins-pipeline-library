@@ -286,15 +286,51 @@ def configureVariables(Map config) {
 }
 
 def triggerPipeline(Map config) {
+
   def artifactsBucketName = require(config, "artifactsBucketName")
   def pipelineName = require(config, "pipelineName")
 
-  // Upload a blank file to trigger the event.
-  sh """
-    rm -f /tmp/trigger
-    echo >/tmp/trigger
-    aws s3 cp /tmp/trigger "s3://$artifactsBucketName/pipelines/$pipelineName/trigger"
+  sh 'rm -f /tmp/trigger; touch /tmp/trigger'
+
+  try {
+    def branchName = env.BRANCH_NAME
+
+    def githubUrl = sh(script: 'git config --get remote.origin.url', returnStdout: true).trim()
+    def repositoryName = githubUrl.replaceAll('.git$', '').tokenize('/').last()
+    def repositoryOwner = githubUrl.tokenize('/')[2]
+
+    def commitAuthor = sh(script: 'git show -s --format="%cn"', returnStdout: true).trim()
+    def triggeringActor = currentBuild.getBuildCauses().find { buildCause -> buildCause.userId } ?: commitAuthor
+
+    def commitHash = sh(script: 'git show -s --format="%H"', returnStdout: true).trim()
+
+    sh """
+content="\$(cat <<EOF
+{
+  "version": "0.1",
+  "ci": {
+    "type": "JENKINS",
+    "triggeredBy": "${triggeringActor}"
+  },
+  "vcs": {
+    "commitAuthor": "${commitAuthor}",
+    "branchName": "${branchName}",
+    "commitHash": "${commitHash}",
+    "repositoryName": "${repositoryName}",
+    "repositoryOwner": "${repositoryOwner}"
+  }
+}
+EOF
+)"
+printf "Content of trigger file:\n%s\n" "\$content"
+echo "\$content" > /tmp/trigger
   """
+  } catch (Exception ex) {
+    println 'Failed to add metadata to trigger file: $ex'
+    println 'Continuing with empty trigger file'
+  }
+  // Upload trigger file to trigger the event
+  sh "aws s3 cp /tmp/trigger s3://$artifactsBucketName/pipelines/$pipelineName/trigger"
 }
 
 private def require(Map config, String name) {
@@ -303,3 +339,4 @@ private def require(Map config, String name) {
   }
   return config[name]
 }
+
