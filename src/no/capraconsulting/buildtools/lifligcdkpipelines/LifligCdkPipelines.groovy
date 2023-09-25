@@ -326,8 +326,8 @@ printf "Content of trigger file:\n%s\n" "\$content"
 echo "\$content" > /tmp/trigger
   """
   } catch (Exception ex) {
-    println 'Failed to add metadata to trigger file: ${ex}'
-    println 'Continuing with empty trigger file'
+    println "Failed to add metadata to trigger file: ${ex}"
+    println "Continuing with empty trigger file"
   }
   // Upload trigger file to trigger the event
   sh "aws s3 cp /tmp/trigger s3://$artifactsBucketName/pipelines/$pipelineName/trigger"
