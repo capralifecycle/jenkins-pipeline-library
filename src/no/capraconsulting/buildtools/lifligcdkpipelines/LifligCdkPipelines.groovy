@@ -326,7 +326,7 @@ printf "Content of trigger file:\n%s\n" "\$content"
 echo "\$content" > /tmp/trigger
   """
   } catch (Exception ex) {
-    println "Failed to add metadata to trigger file: ${ex}"
+    println "Failed to add metadata to trigger file: $ex"
     println "Continuing with empty trigger file"
   }
   // Upload trigger file to trigger the event
