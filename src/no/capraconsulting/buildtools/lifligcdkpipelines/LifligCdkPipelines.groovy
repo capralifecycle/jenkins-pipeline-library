@@ -300,7 +300,7 @@ def triggerPipeline(Map config) {
     def repositoryOwner = githubUrl.tokenize('/')[2]
 
     def commitAuthor = sh(script: 'git show -s --format="%an"', returnStdout: true).trim()
-    def triggeringActor = currentBuild.getBuildCauses().find { buildCause -> buildCause.userId } ?: commitAuthor
+    def triggeringActor = currentBuild.getBuildCauses().find { buildCause -> buildCause.userId }?.userId ?: commitAuthor
 
     def commitHash = sh(script: 'git show -s --format="%H"', returnStdout: true).trim()
 
